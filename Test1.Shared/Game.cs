@@ -42,9 +42,9 @@ namespace test1
 
         protected override void OnLoadingContent()
         {
-            this.contentManager = ContentManager.Create("Content");
-            this.spriteBatch = SpriteBatch.Create();
-            this.texture = this.contentManager.Load<Texture2D>("desktop_uv256");
+            contentManager = ContentManager.Create("Content");
+            spriteBatch = SpriteBatch.Create();
+            texture = contentManager.Load<Texture2D>("desktop_uv256");
 
             base.OnLoadingContent();
         }
@@ -64,9 +64,9 @@ namespace test1
             var position = new Vector2(window.ClientSize.Width / 2f, window.ClientSize.Height / 2f);
             var origin = new Vector2(texture.Width / 2f, texture.Height / 2f);
 
-            this.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
-            this.spriteBatch.Draw(texture, position, null, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
-            this.spriteBatch.End();
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+            spriteBatch.Draw(texture, position, null, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
+            spriteBatch.End();
 
             base.OnDrawing(time);
         }
@@ -75,11 +75,8 @@ namespace test1
         {
             if (disposing)
             {
-                if (this.contentManager != null)
-                    this.contentManager.Dispose();
-
-                if (this.spriteBatch != null)
-                    this.spriteBatch.Dispose();
+                contentManager?.Dispose();
+                spriteBatch?.Dispose();
             }
             base.Dispose(disposing);
         }
