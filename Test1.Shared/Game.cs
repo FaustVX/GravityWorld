@@ -45,6 +45,7 @@ namespace test1
             contentManager = ContentManager.Create("Content");
             spriteBatch = SpriteBatch.Create();
             texture = contentManager.Load<Texture2D>("desktop_uv256");
+            _draw = Using.Create(spriteBatch.Begin, spriteBatch.End);
 
             base.OnLoadingContent();
         }
@@ -64,9 +65,10 @@ namespace test1
             var position = new Vector2(window.ClientSize.Width / 2f, window.ClientSize.Height / 2f);
             var origin = new Vector2(texture.Width / 2f, texture.Height / 2f);
 
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
-            spriteBatch.Draw(texture, position, null, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
-            spriteBatch.End();
+            using (_draw.Start())
+            {
+                spriteBatch.Draw(texture, position, null, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
+            }
 
             base.OnDrawing(time);
         }
@@ -84,5 +86,7 @@ namespace test1
         private ContentManager contentManager;
         private SpriteBatch spriteBatch;
         private Texture2D texture;
+
+        private Using.IDisposable _draw;
     }
 }
