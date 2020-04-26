@@ -5,8 +5,8 @@ using Ultraviolet.Content;
 using Ultraviolet.FreeType2;
 using Ultraviolet.Graphics;
 using Ultraviolet.Graphics.Graphics2D;
-using Ultraviolet.Input;
 using Ultraviolet.OpenGL;
+using static test1.Input.MyInputs;
 
 namespace test1
 {
@@ -51,7 +51,7 @@ namespace test1
 
         protected override void OnUpdating(UltravioletTime time)
         {
-            if (Ultraviolet.GetInput().GetKeyboard().IsKeyPressed(Key.Escape))
+            if (Ultraviolet.GetInput().GetActions().ExitApplication.IsPressed())
             {
                 Exit();
             }
