@@ -41,10 +41,32 @@ namespace test1
 
         public Texture2D Texture { get; set; } = null!;
 
-        public void Draw(SpriteBatch sb)
+        public virtual void Attract(Mover other)
+        {
+            Vector2 vector, force;
+            CalculateGravity(other.Position, other.Mass, out vector, out force);
+            if (vector.Length() <= other.Radius + Radius)
+            {
+                var normal = Vector2.Normalize(vector);
+                var reflected = Vector2.Reflect(other.Velocity, normal);
+                other.Velocity = reflected;
+            }
+
+            other.AddTemporaryForce(force);
+        }
+
+        public virtual void CalculateGravity(Vector2 position, int mass, out Vector2 vector, out Vector2 force)
+        {
+            var G = .025f;
+            vector = Position - position;
+            var lengthSquared = vector.LengthSquared();
+            force = Vector2.Normalize(vector) * (G * (mass * Mass) / lengthSquared);
+        }
+
+        public virtual void Draw(SpriteBatch sb, Vector2 offset)
         {
             var origin = new Vector2(Texture.Width, Texture.Height) / 2;
-            sb.Draw(Texture, Position, null, Color.White, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
+            sb.Draw(Texture, Position - offset, null, Color.White, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
         }
         
         public override void AddTemporaryForce(Vector2 force)

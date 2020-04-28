@@ -5,71 +5,48 @@ using Ultraviolet.Graphics.Graphics2D;
 
 namespace test1
 {
-    public sealed class Attractor : Positionable
+    public sealed class Attractor : Mover
     {
         public Attractor(MouseDevice mouse, int radius)
+            : base(radius)
         {
-            Radius = radius;
             Mouse = mouse;
+            Mouse.Moved += (w, d, x, y, dx, dy) => Position += new Vector2(dx, dy);
         }
 
         public MouseDevice Mouse { get; }
-        public Texture2D Texture { get; set; } = null!;
+        public bool Attractable { get; set; }
 
-        private int _radius;
-        public int Radius
+        public override void Attract(Mover mover)
         {
-            get => _radius;
-            set
+            if (!Attractable)
+                return;
+
+            base.Attract(mover);
+        }
+
+        public override void CalculateGravity(Vector2 position, int mass, out Vector2 vector, out Vector2 force)
+        {
+            if (!Attractable)
             {
-                _radius = value;
-                _mass = (int)(System.MathF.PI * Radius * Radius);
+                vector = force = Vector2.Zero;
+                return;
             }
+            base.CalculateGravity(position, mass, out vector, out force);
         }
 
-        public int Diametre
+        public override void Draw(SpriteBatch sb, Vector2 offset)
         {
-            get => Radius * 2;
-            set => Radius = Diametre / 2;
+            if(!Attractable)
+                return;
+            
+            base.Draw(sb, offset);
         }
 
-        private int _mass;
-        public int Mass
+        public override void Update()
         {
-            get => _mass;
-            set
-            {
-                _mass = value;
-                _radius = (int)(System.MathF.Sqrt(Mass) / System.MathF.PI);
-            }
-        }
-
-        public override Vector2 Position
-        {
-            get => base.Position = new Vector2(Mouse.Position.X, Mouse.Position.Y);
-            set => base.Position = Position;
-        }
-
-        public void Attract(Mover mover)
-        {
-            var G = .025f;
-            var vector = Position - mover.Position;
-            if(vector.Length() <= mover.Radius + Radius)
-            {
-                var normal = Vector2.Normalize(vector);
-                var reflected = Vector2.Reflect(mover.Velocity, normal);
-                mover.Velocity = reflected;
-            }
-            var lengthSquared = vector.LengthSquared();
-            var force = Vector2.Normalize(vector) * (G * (mover.Mass * Mass) / lengthSquared);
-
-            mover.AddTemporaryForce(force);
-        }
-
-        public void Draw(SpriteBatch sb)
-        {
-            var origin = new Vector2(Texture.Width, Texture.Height) / 2;
-            sb.Draw(Texture, Position, null, Color.White, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
+            if(Mouse.IsButtonPressed(MouseButton.Right))
+                Attractable ^= true;
         }
     }
 }
