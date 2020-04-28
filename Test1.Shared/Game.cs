@@ -12,6 +12,16 @@ namespace test1
 {
     public partial class Game : UltravioletApplication
     {
+        private sealed class TestObject : Accelerable
+        {
+            public Texture2D Texture { get; set; }
+
+            public void Draw(SpriteBatch sb)
+            {
+                sb.Draw(Texture, Position, Color.White);
+            }
+        }
+
         public Game()
             : base("FaustVX", "My Test1")
         { }
@@ -36,6 +46,13 @@ namespace test1
 
         protected override void OnInitialized()
         {
+            _obj = new TestObject()
+            {
+                Friction = .99f
+            };
+            _obj.AddConstantForce(Vector2.UnitY * .3f);
+            _obj.AddTemporaryForce(Vector2.UnitX * 15f);
+
             UsePlatformSpecificFileSource();
             base.OnInitialized();
         }
@@ -46,16 +63,20 @@ namespace test1
             spriteBatch = SpriteBatch.Create();
             texture = contentManager.Load<Texture2D>("desktop_uv256");
             _draw = Using.Create(spriteBatch.Begin, spriteBatch.End);
+            _obj.Texture = texture;
 
             base.OnLoadingContent();
         }
 
         protected override void OnUpdating(UltravioletTime time)
         {
+            var ups = 1 / time.ElapsedTime.TotalSeconds;
+            var upsRatio = TargetElapsedTime / time.ElapsedTime;
             if (Ultraviolet.GetInput().GetActions().ExitApplication.IsPressed())
             {
                 Exit();
             }
+            _obj.Update();
             base.OnUpdating(time);
         }
 
@@ -64,15 +85,11 @@ namespace test1
             var fps = 1 / time.ElapsedTime.TotalSeconds;
             var fpsRatio = TargetElapsedTime / time.ElapsedTime;
             var window = Ultraviolet.GetPlatform().Windows.GetCurrent();
-            var mouse = Ultraviolet.GetInput().GetMouse().Position;
-            var mouseRatio = new Vector2(mouse.X, mouse.Y) / new Vector2(window.ClientSize.Width, window.ClientSize.Height);
-            var position = new Vector2(window.ClientSize.Width, window.ClientSize.Height) * mouseRatio;
-            var origin = new Vector2(texture.Width, texture.Height) * mouseRatio;
 
             using (_draw.Start())
             {
-                spriteBatch.Draw(texture, new RectangleF(Point2F.Zero, window.ClientSize), Color.White * .25f);
-                spriteBatch.Draw(texture, position, null, Color.White * .8f, 0f, origin, 1f, SpriteEffects.None, 0f);
+                spriteBatch.Draw(texture, new RectangleF(Point2F.Zero, window.ClientSize), new Color(1f, 1f, 1f, 0.25f));
+                _obj.Draw(spriteBatch);
             }
 
             base.OnDrawing(time);
@@ -91,6 +108,7 @@ namespace test1
         private ContentManager contentManager;
         private SpriteBatch spriteBatch;
         private Texture2D texture;
+        private TestObject _obj;
 
         private Using.IDisposable _draw;
     }
