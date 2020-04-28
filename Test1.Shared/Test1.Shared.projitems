@@ -18,6 +18,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Accelerable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Mover.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\MyInputs.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Input\MyInputs.Actions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Input\MyInputs.ActionAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)Content\desktop_uv256.png">
