@@ -101,15 +101,16 @@ namespace test1
             {
                 contentManager?.Dispose();
                 spriteBatch?.Dispose();
+                texture?.Dispose();
             }
             base.Dispose(disposing);
         }
 
-        private ContentManager contentManager;
-        private SpriteBatch spriteBatch;
-        private Texture2D texture;
-        private TestObject _obj;
+        private ContentManager contentManager = null!;
+        private SpriteBatch spriteBatch = null!;
+        private Texture2D texture = null!;
+        private TestObject _obj = null!;
 
-        private Using.IDisposable _draw;
+        private Using.IDisposable _draw = null!;
     }
 }

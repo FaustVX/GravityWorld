@@ -17,7 +17,7 @@ namespace test1.Input
 
             public static Actions Instance { get; } = CreateSingleton<Actions>();
 
-            public InputAction ExitApplication { get; private set; }
+            public InputAction ExitApplication { get; private set; } = null!;
 
             /// <inheritdoc/>
             protected override void OnCreatingActions()

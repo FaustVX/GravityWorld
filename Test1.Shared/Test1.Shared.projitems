@@ -1,9 +1,10 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <HasSharedItems>true</HasSharedItems>
     <SharedGUID>3e1c0c3c-1967-4ac7-be58-636f7c8f9e56</SharedGUID>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>test1</Import_RootNamespace>
