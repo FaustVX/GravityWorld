@@ -16,7 +16,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Positionable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Movable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Accelerable.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Attractor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Mover.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\MyInputs.cs" />
   </ItemGroup>

@@ -39,8 +39,6 @@ namespace test1
 
         protected override void OnInitialized()
         {
-            Ultraviolet.GetInput().GetMouse().SetIsRelativeModeEnabled(true);
-            _attractor = new Attractor(Ultraviolet.GetInput().GetMouse(), 50);
             Reset();
 
             UsePlatformSpecificFileSource();
@@ -53,7 +51,7 @@ namespace test1
             spriteBatch = SpriteBatch.Create();
             pixel = Texture2D.CreateTexture(1, 1);
             pixel.SetData(new[] { Color.White });
-            _attractor.Texture = texture = contentManager.Load<Texture2D>("desktop_uv256");
+            texture = contentManager.Load<Texture2D>("desktop_uv256");
             foreach (var mover in _movers)
                 mover.Texture = texture;
             _draw = Using.Create(spriteBatch.Begin, spriteBatch.End);
@@ -68,20 +66,23 @@ namespace test1
             var actions = Ultraviolet.GetInput().GetGlobalActions();
             if (actions.ExitApplication.IsPressed())
             {
-                Exit();
+                if (SelectedMover is null)
+                    Exit();
+                else
+                    SelectedMover = null;
             }
             else if (actions.RestartApplication.IsPressed())
             {
-                Reset(Ultraviolet.GetInput().GetKeyboard().IsShiftDown);
+                Reset();
             }
             else if (actions.NextPlanet.IsPressed())
             {
-                var old = _movers.IndexOf(SelectedMover);
+                var old = _movers.IndexOf(SelectedMover!);
                 SelectedMover = _movers.Count <= 0 ? null! : _movers[(old + 1) % _movers.Count];
             }
-            else if (actions.DeletePlanet.IsPressed() && !(SelectedMover is Attractor))
+            else if (actions.DeletePlanet.IsPressed())
             {
-                _movers.Remove(SelectedMover);
+                _movers.Remove(SelectedMover!);
                 SelectedMover = null!;
             }
 
@@ -97,14 +98,12 @@ namespace test1
             
             foreach (var mover in _movers)
             {
-                _attractor.Attract(mover);
                 foreach (var other in _movers)
                     if(!object.ReferenceEquals(mover, other))
                         mover.Attract(other);
             }
             _movers.RemoveAll(m => m.Radius is 0);
 
-            _attractor.Update();
             foreach (var mover in _movers)
             mover.Update();
             base.OnUpdating(time);
@@ -119,18 +118,19 @@ namespace test1
 
             using (_draw.Start())
             {
+                var offset = SelectedMover is Mover m ? _offset + m.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : _offset;
+#if DEBUG
                 var size = 5;
                 var half = size / 2f;
                 var width = (window.ClientSize.Width / size) + 1;
                 var height = (window.ClientSize.Height / size) + 1;
-                var offset = _offset + SelectedMover.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2;
 
                 for (int x = 0; x < width; x++)
                     for (int y = 0; y < height; y++)
                     {
                         var position = new Vector2(x * size + half, y * size + half) + offset;
 
-                        _attractor.CalculateGravity(position, 1, out _, out var force);
+                        var force = Vector2.Zero;
                         foreach (var mover in _movers)
                         {
                             mover.CalculateGravity(position, 1, out _, out var force2);
@@ -140,10 +140,9 @@ namespace test1
 
                         spriteBatch.Draw(pixel, new RectangleF(x * size, y * size, size, size), Color.FromRgba((uint)(magnitude * uint.MaxValue)));
                     }
-
+#endif
                 foreach (var mover in _movers)
                     mover.Draw(spriteBatch, offset);
-                _attractor.Draw(spriteBatch, offset);
             }
 
             base.OnDrawing(time);
@@ -160,7 +159,7 @@ namespace test1
             base.Dispose(disposing);
         }
 
-        private void Reset(bool resetMousePosition = true)
+        private void Reset()
         {
             var rng = new Random();
             var window = Ultraviolet.GetPlatform().Windows.GetPrimary().ClientSize;
@@ -179,31 +178,23 @@ namespace test1
                 };
                 _movers.Add(mover);
             }
-            
-            if(resetMousePosition)
-            {
-                _attractor.Position = new Vector2(window.Width / 2, window.Height / 2);
-                _attractor.Attractable = true;
-            }
-            _attractor.Radius = 50;
             _offset = Vector2.Zero;
         }
 
         private ContentManager contentManager = null!;
         private SpriteBatch spriteBatch = null!;
         private Texture2D texture = null!, pixel = null!;
-        private Attractor _attractor = null!;
         private List<Mover> _movers = null!;
-        private Mover SelectedMover
+        private Mover? SelectedMover
         {
-            get => _movers.FirstOrDefault(m => m.Selected) ?? _attractor;
+            get => _movers.FirstOrDefault(m => m.Selected);
             set
             {
-                _attractor.Selected = false;
                 foreach (var mover in _movers)
                     mover.Selected = false;
-                (value ?? _attractor).Selected = true;
                 _offset = Vector2.Zero;
+                if (value is {})
+                    value.Selected = true;
             }
         }
 

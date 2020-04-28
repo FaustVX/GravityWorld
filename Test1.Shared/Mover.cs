@@ -43,7 +43,7 @@ namespace test1
 
         public Texture2D Texture { get; set; } = null!;
 
-        public virtual void Attract(Mover other)
+        public void Attract(Mover other)
         {
             if(Mass is 0 || other.Mass is 0)
                 return;
@@ -55,7 +55,7 @@ namespace test1
                 var reflected = Vector2.Reflect(other.Velocity, normal);
 
                 var (a, b) = (this, other);
-                if(b is Attractor || b.Mass > a.Mass)
+                if(b.Mass > a.Mass)
                     (a, b) = (b, a);
 
                 a.Mass += b.Mass;
@@ -67,7 +67,7 @@ namespace test1
             other.AddTemporaryForce(force);
         }
 
-        public virtual void CalculateGravity(Vector2 position, int mass, out Vector2 vector, out Vector2 force)
+        public void CalculateGravity(Vector2 position, int mass, out Vector2 vector, out Vector2 force)
         {
             var G = .005f;
             vector = Position - position;
@@ -75,7 +75,7 @@ namespace test1
             force = Vector2.Normalize(vector) * (G * (mass * Mass) / lengthSquared);
         }
 
-        public virtual void Draw(SpriteBatch sb, Vector2 offset)
+        public void Draw(SpriteBatch sb, Vector2 offset)
         {
             var origin = new Vector2(Texture.Width, Texture.Height) / 2;
             sb.Draw(Texture, Position - offset, null, Selected ? Color.LawnGreen * .75f : Color.White, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
