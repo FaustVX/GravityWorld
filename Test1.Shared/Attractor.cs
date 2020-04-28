@@ -11,11 +11,20 @@ namespace test1
             : base(radius)
         {
             Mouse = mouse;
-            Mouse.Moved += (w, d, x, y, dx, dy) => Position += new Vector2(dx, dy);
+            Mouse.SetIsRelativeModeEnabled(Attractable);
+            Mouse.Moved += (w, d, x, y, dx, dy) =>
+            {
+                var displacement = Attractable ? new Vector2(dx, dy) : Vector2.Zero;
+                if (Selected)
+                    displacement *= -1;
+                
+                Position += displacement;
+            };
+            Selected = true;
         }
 
         public MouseDevice Mouse { get; }
-        public bool Attractable { get; set; }
+        public bool Attractable { get; set; } = true;
 
         public override void Attract(Mover mover)
         {
@@ -46,7 +55,12 @@ namespace test1
         public override void Update()
         {
             if(Mouse.IsButtonPressed(MouseButton.Right))
+            {
                 Attractable ^= true;
+                Mouse.SetIsRelativeModeEnabled(Attractable);
+            }
+            if(Attractable)
+                Mouse.WarpToPrimaryWindowCenter();
         }
     }
 }

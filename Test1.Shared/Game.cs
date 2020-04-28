@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Ultraviolet;
 using Ultraviolet.BASS;
 using Ultraviolet.Content;
@@ -63,24 +65,34 @@ namespace test1
             var ups = 1 / time.ElapsedTime.TotalSeconds;
             var upsRatio = TargetElapsedTime / time.ElapsedTime;
             Debug.WriteLine($"UPS: {ups}");
-            Ultraviolet.GetInput().GetMouse().WarpToPrimaryWindowCenter();
             var actions = Ultraviolet.GetInput().GetGlobalActions();
             if (actions.ExitApplication.IsPressed())
             {
                 Exit();
-            } else if (actions.RestartApplication.IsPressed())
+            }
+            else if (actions.RestartApplication.IsPressed())
             {
-                Reset(Ultraviolet.GetInput().GetMouse().IsShiftDown);
+                Reset(Ultraviolet.GetInput().GetKeyboard().IsShiftDown);
+            }
+            else if (actions.NextPlanet.IsPressed())
+            {
+                var old = _movers.IndexOf(SelectedMover);
+                SelectedMover = _movers.Count <= 0 ? null! : _movers[(old + 1) % _movers.Count];
+            }
+            else if (actions.DeletePlanet.IsPressed() && !(SelectedMover is Attractor))
+            {
+                _movers.Remove(SelectedMover);
+                SelectedMover = null!;
             }
 
             var offsetSpeed = 5;
-            if(actions.Up.IsPressed(ignoreRepeats: false))
+            if(actions.Up.IsDown())
                 _offset -= Vector2.UnitY * offsetSpeed;
-            if(actions.Down.IsPressed(ignoreRepeats: false))
+            if(actions.Down.IsDown())
                 _offset += Vector2.UnitY * offsetSpeed;
-            if(actions.Left.IsPressed(ignoreRepeats: false))
+            if(actions.Left.IsDown())
                 _offset -= Vector2.UnitX * offsetSpeed;
-            if(actions.Right.IsPressed(ignoreRepeats: false))
+            if(actions.Right.IsDown())
                 _offset += Vector2.UnitX * offsetSpeed;
             
             foreach (var mover in _movers)
@@ -90,6 +102,7 @@ namespace test1
                     if(!object.ReferenceEquals(mover, other))
                         mover.Attract(other);
             }
+            _movers.RemoveAll(m => m.Radius is 0);
 
             _attractor.Update();
             foreach (var mover in _movers)
@@ -106,13 +119,16 @@ namespace test1
 
             using (_draw.Start())
             {
-                var size = 8;
+                var size = 5;
                 var half = size / 2f;
-                for (int x = 0; x < window.ClientSize.Width / size; x++)
-                {
-                    for (int y = 0; y < window.ClientSize.Height / size; y++)
+                var width = (window.ClientSize.Width / size) + 1;
+                var height = (window.ClientSize.Height / size) + 1;
+                var offset = _offset + SelectedMover.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2;
+
+                for (int x = 0; x < width; x++)
+                    for (int y = 0; y < height; y++)
                     {
-                        var position = new Vector2(x * size + half, y * size + half) + _offset;
+                        var position = new Vector2(x * size + half, y * size + half) + offset;
 
                         _attractor.CalculateGravity(position, 1, out _, out var force);
                         foreach (var mover in _movers)
@@ -124,10 +140,10 @@ namespace test1
 
                         spriteBatch.Draw(pixel, new RectangleF(x * size, y * size, size, size), Color.FromRgba((uint)(magnitude * uint.MaxValue)));
                     }
-                }
+
                 foreach (var mover in _movers)
-                    mover.Draw(spriteBatch, _offset);
-                _attractor.Draw(spriteBatch, _offset);
+                    mover.Draw(spriteBatch, offset);
+                _attractor.Draw(spriteBatch, offset);
             }
 
             base.OnDrawing(time);
@@ -152,21 +168,24 @@ namespace test1
             var velocity = 75;
             var velRatio = 1000;
 
-            _movers = new Mover[rng.Next(1, 10)];
-            for (int i = 0; i < _movers.Length; i++)
+            _movers = new List<Mover>(rng.Next(5, 25));
+            for (int i = 0; i < _movers.Capacity; i++)
             {
-                _movers[i] = new Mover(rng.Next(10, 30))
+                var mover = new Mover(rng.Next(10, 30))
                 {
                     Position = new Vector2(rng.Next(border, window.Width - border), rng.Next(border, window.Height - border)),
-                    Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / velRatio,
+                    // Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / velRatio,
                     Texture = texture
                 };
+                _movers.Add(mover);
             }
+            
             if(resetMousePosition)
             {
                 _attractor.Position = new Vector2(window.Width / 2, window.Height / 2);
                 _attractor.Attractable = true;
             }
+            _attractor.Radius = 50;
             _offset = Vector2.Zero;
         }
 
@@ -174,7 +193,19 @@ namespace test1
         private SpriteBatch spriteBatch = null!;
         private Texture2D texture = null!, pixel = null!;
         private Attractor _attractor = null!;
-        private Mover[] _movers = null!;
+        private List<Mover> _movers = null!;
+        private Mover SelectedMover
+        {
+            get => _movers.FirstOrDefault(m => m.Selected) ?? _attractor;
+            set
+            {
+                _attractor.Selected = false;
+                foreach (var mover in _movers)
+                    mover.Selected = false;
+                (value ?? _attractor).Selected = true;
+                _offset = Vector2.Zero;
+            }
+        }
 
         private Using.IDisposable _draw = null!;
 

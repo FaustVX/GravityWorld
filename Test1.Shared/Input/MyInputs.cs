@@ -68,6 +68,12 @@ namespace test1.Input
             [Action(Key.Right, "RIGHT")]
             public InputAction Right { get; private set; } = null!;
 
+            [Action(Key.Tab, "NEXT_PLANET")]
+            public InputAction NextPlanet { get; private set; } = null!;
+
+            [Action(Key.Delete, "DELETE_PLANET")]
+            public InputAction DeletePlanet { get; private set; } = null!;
+
             /// <inheritdoc/>
             protected override void OnCreatingActions()
             {
