@@ -11,7 +11,11 @@
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "publish",
@@ -21,7 +25,12 @@
                 "publish",
                 "${workspaceFolder}/test1.NETCore3/test1.NETCore3.csproj",
                 "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "/consoleloggerparameters:NoSummary",
+                "/property:PublishSingleFile=true",
+                "/property:PublishTrimmed=true",
+                "--configuration=Release",
+                "--runtime=${input:runtime}",
+                "--self-contained=true"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -37,6 +46,45 @@
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "run",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project=${workspaceFolder}/test1.NETCore3/test1.NETCore3.csproj",
+                "--configuration=${input:configuration}",
+                
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ],
+    "inputs":
+    [
+        {
+            "id": "configuration",
+            "description": "Select Configuration",
+            "type": "pickString",
+            "default": "Release",
+            "options":
+            [
+                "Debug",
+                "Release"
+            ]
+        },
+        {
+            "id": "runtime",
+            "description": "Select Runtime",
+            "type": "pickString",
+            "default": "win-x64",
+            "options":
+            [
+                "win-x64",
+                "linux-x64",
+                "linux-arm",
+                "osx-x64"
+            ]
         }
     ]
 }
