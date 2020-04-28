@@ -1,4 +1,4 @@
-using Ultraviolet;
+﻿using Ultraviolet;
 using Ultraviolet.Core;
 using Ultraviolet.Input;
 
@@ -18,11 +18,13 @@ namespace test1.Input
             public static Actions Instance { get; } = CreateSingleton<Actions>();
 
             public InputAction ExitApplication { get; private set; } = null!;
+            public InputAction RestartApplication { get; private set; } = null!;
 
             /// <inheritdoc/>
             protected override void OnCreatingActions()
             {
                 ExitApplication = CreateAction("EXIT_APPLICATION");
+                RestartApplication = CreateAction("RESTART_APPLICATION");
 
                 base.OnCreatingActions();
             }
@@ -46,6 +48,7 @@ namespace test1.Input
             private void Reset_Desktop()
             {
                 ExitApplication.Primary = CreateKeyboardBinding(Key.Escape);
+                RestartApplication.Primary = CreateKeyboardBinding(Key.R);
             }
 
             private void Reset_Android()

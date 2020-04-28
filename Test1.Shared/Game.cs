@@ -12,16 +12,6 @@ namespace test1
 {
     public partial class Game : UltravioletApplication
     {
-        private sealed class TestObject : Accelerable
-        {
-            public Texture2D Texture { get; set; }
-
-            public void Draw(SpriteBatch sb)
-            {
-                sb.Draw(Texture, Position, Color.White);
-            }
-        }
-
         public Game()
             : base("FaustVX", "My Test1")
         { }
@@ -46,12 +36,12 @@ namespace test1
 
         protected override void OnInitialized()
         {
-            _obj = new TestObject()
+            var window = Ultraviolet.GetPlatform().Windows.GetPrimary().ClientSize;
+            _attractor = new Attractor(Ultraviolet.GetInput().GetMouse(), 50);
+            _mover = new Mover(15)
             {
-                Friction = .99f
+                Position = new Vector2(window.Width, window.Height) / 2
             };
-            _obj.AddConstantForce(Vector2.UnitY * .3f);
-            _obj.AddTemporaryForce(Vector2.UnitX * 15f);
 
             UsePlatformSpecificFileSource();
             base.OnInitialized();
@@ -61,10 +51,8 @@ namespace test1
         {
             contentManager = ContentManager.Create("Content");
             spriteBatch = SpriteBatch.Create();
-            texture = contentManager.Load<Texture2D>("desktop_uv256");
+            _mover.Texture = _attractor.Texture = texture = contentManager.Load<Texture2D>("desktop_uv256");
             _draw = Using.Create(spriteBatch.Begin, spriteBatch.End);
-            _obj.Texture = texture;
-
             base.OnLoadingContent();
         }
 
@@ -72,11 +60,21 @@ namespace test1
         {
             var ups = 1 / time.ElapsedTime.TotalSeconds;
             var upsRatio = TargetElapsedTime / time.ElapsedTime;
-            if (Ultraviolet.GetInput().GetActions().ExitApplication.IsPressed())
+            var actions = Ultraviolet.GetInput().GetActions();
+            if (actions.ExitApplication.IsPressed())
             {
                 Exit();
+            } else if (actions.RestartApplication.IsPressed())
+            {
+                var window = Ultraviolet.GetPlatform().Windows.GetPrimary().ClientSize;
+                _mover = new Mover(15)
+                {
+                    Position = new Vector2(window.Width, window.Height) / 2,
+                    Texture = texture
+                };
             }
-            _obj.Update();
+            _attractor.Attract(_mover);
+            _mover.Update();
             base.OnUpdating(time);
         }
 
@@ -89,7 +87,8 @@ namespace test1
             using (_draw.Start())
             {
                 spriteBatch.Draw(texture, new RectangleF(Point2F.Zero, window.ClientSize), new Color(1f, 1f, 1f, 0.25f));
-                _obj.Draw(spriteBatch);
+                _mover.Draw(spriteBatch);
+                _attractor.Draw(spriteBatch);
             }
 
             base.OnDrawing(time);
@@ -109,7 +108,8 @@ namespace test1
         private ContentManager contentManager = null!;
         private SpriteBatch spriteBatch = null!;
         private Texture2D texture = null!;
-        private TestObject _obj = null!;
+        private Attractor _attractor = null!;
+        private Mover _mover = null!;
 
         private Using.IDisposable _draw = null!;
     }
