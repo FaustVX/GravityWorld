@@ -61,13 +61,18 @@ namespace test1
 
         protected override void OnDrawing(UltravioletTime time)
         {
+            var fps = 1 / time.ElapsedTime.TotalSeconds;
+            var fpsRatio = TargetElapsedTime / time.ElapsedTime;
             var window = Ultraviolet.GetPlatform().Windows.GetCurrent();
-            var position = new Vector2(window.ClientSize.Width / 2f, window.ClientSize.Height / 2f);
-            var origin = new Vector2(texture.Width / 2f, texture.Height / 2f);
+            var mouse = Ultraviolet.GetInput().GetMouse().Position;
+            var mouseRatio = new Vector2(mouse.X, mouse.Y) / new Vector2(window.ClientSize.Width, window.ClientSize.Height);
+            var position = new Vector2(window.ClientSize.Width, window.ClientSize.Height) * mouseRatio;
+            var origin = new Vector2(texture.Width, texture.Height) * mouseRatio;
 
             using (_draw.Start())
             {
-                spriteBatch.Draw(texture, position, null, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
+                spriteBatch.Draw(texture, new RectangleF(Point2F.Zero, window.ClientSize), Color.White * .25f);
+                spriteBatch.Draw(texture, position, null, Color.White * .8f, 0f, origin, 1f, SpriteEffects.None, 0f);
             }
 
             base.OnDrawing(time);
