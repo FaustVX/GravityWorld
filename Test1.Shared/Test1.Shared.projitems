@@ -12,6 +12,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Game.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Program.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Globals.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Using.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Positionable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Movable.cs" />

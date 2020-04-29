@@ -6,8 +6,9 @@ namespace test1
 {
     public class Mover : Accelerable
     {
-        public Mover(int radius)
+        public Mover(int radius, float density)
         {
+            Density = density;
             Radius = radius;
         }
 
@@ -18,26 +19,25 @@ namespace test1
             set
             {
                 _radius = value;
-                _mass = (int)(System.MathF.PI * Radius * Radius);
+                Mass = (int)(Surface * Density);
             }
         }
 
+        public float Density { get; private set; }
+
+        public int Surface
+        {
+            get => (int)(System.MathF.PI * Radius * Radius);
+            set => Radius = (int)System.MathF.Sqrt(value / System.MathF.PI);
+        }
+        
         public int Diametre
         {
             get => Radius * 2;
             set => Radius = value / 2;
         }
 
-        private int _mass;
-        public int Mass
-        {
-            get => _mass;
-            set
-            {
-                _mass = value;
-                _radius = (int)(System.MathF.Sqrt(Mass / System.MathF.PI));
-            }
-        }
+        public int Mass { get; private set; }
 
         public bool Selected { get; set; }
 
@@ -45,42 +45,54 @@ namespace test1
 
         public void Attract(Mover other)
         {
-            if(Mass is 0 || other.Mass is 0)
+            if (Mass is 0 || other.Mass is 0)
                 return;
-            
-            CalculateGravity(other.Position, other.Mass, out var vector, out var force);
-            if (vector.Length() <= (other.Radius + Radius) * 0.8f)
+
+            if(CalculateGravity(other.Position, other.Mass, out var vector, out var force))
             {
-                var normal = Vector2.Normalize(vector);
-                var reflected = Vector2.Reflect(other.Velocity, normal);
+                if (vector.Length() <= (other.Radius + Radius) * 0.65f)
+                {
+                    var normal = Vector2.Normalize(vector);
+                    var reflected = Vector2.Reflect(other.Velocity, normal);
 
-                var (a, b) = (this, other);
-                if(b.Mass > a.Mass)
-                    (a, b) = (b, a);
+                    var (a, b) = (this, other);
+                    if (b.Mass > a.Mass)
+                        (a, b) = (b, a);
 
-                a.Mass += b.Mass;
-                a.AddTemporaryForce(b.Velocity);
-                b.Radius = 0;
-                a.Selected |= b.Selected;
+                    a.Merge(b);
+                }
+
+                other.AddTemporaryForce(force);
             }
-
-            other.AddTemporaryForce(force);
         }
 
-        public void CalculateGravity(Vector2 position, int mass, out Vector2 vector, out Vector2 force)
+        private void Merge(Mover other)
         {
-            var G = .005f;
+            Mass += other.Mass;
+            Surface += other.Surface;
+            Density = Mass / Surface;
+            AddTemporaryForce(other.Velocity);
+            other.Radius = 0;
+            Selected |= other.Selected;
+        }
+
+        public bool CalculateGravity(Vector2 position, float mass, out Vector2 vector, out Vector2 force)
+        {
             vector = Position - position;
             var lengthSquared = vector.LengthSquared();
-            force = Vector2.Normalize(vector) * (G * (mass * Mass) / lengthSquared);
+            force = Vector2.Normalize(vector) * (Globals.G * (mass * Mass) / lengthSquared);
+            return true;
         }
 
         public void Draw(SpriteBatch sb, Vector2 offset)
         {
             var origin = new Vector2(Texture.Width, Texture.Height) / 2;
-            sb.Draw(Texture, Position - offset, null, Selected ? Color.LawnGreen * .75f : Color.White, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
+            sb.Draw(Texture, Position - offset, null, (Selected ? Color.LawnGreen : Color.White) * .75f, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
+            sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Acceleration) * Radius / 2, null, Color.Red, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
+            sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Velocity) * Radius / 4, null, Color.Blue, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
+            sb.Draw(Globals.Pixel, Position - offset, Color.Black);
         }
-        
+
         public override void AddTemporaryForce(Vector2 force)
             => base.AddTemporaryForce(force / Mass);
     }

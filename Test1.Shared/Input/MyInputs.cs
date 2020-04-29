@@ -46,6 +46,15 @@ namespace test1.Input
 
             [field: Action(Key.Delete, "DELETE_PLANET")]
             public InputAction DeletePlanet { get; } = null!;
+
+            [field: Action(Key.Space, "PLAY_SIMULATION")]
+            public InputAction PlaySimulation { get; } = null!;
+
+            [field: Action(Key.Return, "STEP_SIMULATION")]
+            public InputAction StepSimulation { get; } = null!;
+
+            [field: Action(Key.Backspace, "SHOW_GRAVTY")]
+            public InputAction ShowGravity { get; } = null!;
         }
     }
 }

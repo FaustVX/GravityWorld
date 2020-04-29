@@ -49,8 +49,8 @@ namespace test1
         {
             contentManager = ContentManager.Create("Content");
             spriteBatch = SpriteBatch.Create();
-            pixel = Texture2D.CreateTexture(1, 1);
-            pixel.SetData(new[] { Color.White });
+            Globals.Pixel = Texture2D.CreateTexture(1, 1);
+            Globals.Pixel.SetData(new[] { Color.White });
             texture = contentManager.Load<Texture2D>("desktop_uv256");
             foreach (var mover in _movers)
                 mover.Texture = texture;
@@ -85,6 +85,7 @@ namespace test1
                 _movers.Remove(SelectedMover!);
                 SelectedMover = null!;
             }
+            _paused ^= actions.PlaySimulation.IsPressed();
 
             var offsetSpeed = 5;
             if(actions.Up.IsDown())
@@ -96,16 +97,18 @@ namespace test1
             if(actions.Right.IsDown())
                 _offset += Vector2.UnitX * offsetSpeed;
             
-            foreach (var mover in _movers)
+            if (!_paused || actions.StepSimulation.IsPressed(ignoreRepeats: false))
             {
-                foreach (var other in _movers)
-                    if(!object.ReferenceEquals(mover, other))
-                        mover.Attract(other);
-            }
-            _movers.RemoveAll(m => m.Radius is 0);
+                _movers.AsParallel().AsUnordered().ForAll(m => m.ResetAcceleration());
 
-            foreach (var mover in _movers)
-            mover.Update();
+                foreach (var mover in _movers)
+                    _movers.AsParallel().AsUnordered().Where(other => ! object.ReferenceEquals(mover, other)).ForAll(mover.Attract);
+
+                _movers.RemoveAll(m => m.Radius is 0);
+
+                _movers.AsParallel().AsUnordered().ForAll(m => m.Update());
+            }
+            
             base.OnUpdating(time);
         }
 
@@ -119,29 +122,40 @@ namespace test1
             using (_draw.Start())
             {
                 var offset = SelectedMover is Mover m ? _offset + m.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : _offset;
-#if DEBUG
-                var size = 5;
-                var half = size / 2f;
-                var width = (window.ClientSize.Width / size) + 1;
-                var height = (window.ClientSize.Height / size) + 1;
+                window.Caption = SelectedMover is Mover m1 ? $"{(int)fps}fps -- {m1.Mass}kg - {m1.Density:0.00000}kg/m2 - {m1.Surface}m2 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : $"{(int)fps}fps";
+                if (Ultraviolet.GetInput().GetGlobalActions().ShowGravity.IsDown())
+                {
+                    var size = 15;
+                    var half = size / 2f;
+                    var width = (window.ClientSize.Width / size) + 1;
+                    var height = (window.ClientSize.Height / size) + 1;
+                    var mouse = Ultraviolet.GetInput().GetMouse().Position;
 
-                for (int x = 0; x < width; x++)
-                    for (int y = 0; y < height; y++)
-                    {
-                        var position = new Vector2(x * size + half, y * size + half) + offset;
-
-                        var force = Vector2.Zero;
-                        foreach (var mover in _movers)
+                    for (int x = 0; x < width; x++)
+                        for (int y = 0; y < height; y++)
                         {
-                            mover.CalculateGravity(position, 1, out _, out var force2);
-                            force += force2;
-                        }
-                        var magnitude = force.Length();
+                            var position = new Vector2(x * size + half, y * size + half) + offset;
 
-                        spriteBatch.Draw(pixel, new RectangleF(x * size, y * size, size, size), Color.FromRgba((uint)(magnitude * uint.MaxValue)));
-                    }
+                            var force = Vector2.Zero;
+                            foreach (var mover in _movers)
+                            {
+                                mover.CalculateGravity(position, 1, out _, out var force2);
+                                force += force2;
+                            }
+                            var magnitude = force.Length();
+#if DEBUG
+                            var rect = new RectangleF(position.X, position.Y, size, size);
+                            if(rect.Contains(mouse.X + offset.X, mouse.Y + offset.Y))
+                                Ultraviolet.GetPlatform().Windows.GetPrimary().Caption += $" -- pointed gravity: {magnitude:0.00000}m/s/s";
 #endif
-                foreach (var mover in _movers)
+
+                            magnitude *= 1_000;
+                            var color = magnitude <= 1 ? Color.Green.Interpolate(Color.Blue, magnitude) : Color.Red.Interpolate(Color.Blue, 1 / (magnitude));
+
+                            spriteBatch.Draw(Globals.Pixel, new RectangleF(x * size, y * size, size, size), color);
+                        }
+                }
+                foreach (var mover in _movers.Where(mover => new RectangleF(Point2F.Zero, window.ClientSize).Contains(mover.Position - offset)))
                     mover.Draw(spriteBatch, offset);
             }
 
@@ -163,14 +177,14 @@ namespace test1
         {
             var rng = new Random();
             var window = Ultraviolet.GetPlatform().Windows.GetPrimary().ClientSize;
-            var border = 100;
+            var border = -500;
             var velocity = 75;
-            var velRatio = 1000;
-
-            _movers = new List<Mover>(rng.Next(5, 25));
+            var velRatio = 1000f;
+            
+            _movers = new List<Mover>(rng.Next(700, 800));
             for (int i = 0; i < _movers.Capacity; i++)
             {
-                var mover = new Mover(rng.Next(10, 30))
+                var mover = new Mover(rng.Next(5, 15), (float)rng.NextDouble() * 25)
                 {
                     Position = new Vector2(rng.Next(border, window.Width - border), rng.Next(border, window.Height - border)),
                     // Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / velRatio,
@@ -183,7 +197,7 @@ namespace test1
 
         private ContentManager contentManager = null!;
         private SpriteBatch spriteBatch = null!;
-        private Texture2D texture = null!, pixel = null!;
+        private Texture2D texture = null!;
         private List<Mover> _movers = null!;
         private Mover? SelectedMover
         {
@@ -201,5 +215,6 @@ namespace test1
         private Using.IDisposable _draw = null!;
 
         private Vector2 _offset = Vector2.Zero;
+        private bool _paused = true;
     }
 }

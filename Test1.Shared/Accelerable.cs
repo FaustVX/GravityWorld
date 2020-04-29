@@ -6,34 +6,17 @@ namespace test1
 {
     public abstract class Accelerable : Movable
     {
+        public Vector2 Acceleration { get; protected set; } = Vector2.Zero;
 
-        protected readonly List<Vector2> _forces = new List<Vector2>();
-        public IReadOnlyList<Vector2> Forces => _forces;
-        public Vector2 Acceleration { get; protected set; }
-        public Vector2? TemporaryForce { get; protected set; }
-
-        public virtual void AddConstantForce(Vector2 force)
-        {
-            _forces.Add(force);
-            Acceleration = Forces.Aggregate(Ultraviolet.Vector2.Zero, (a, b) => a + b);
-        }
-
-        public virtual void RemoveConstantForce(Vector2 force)
-        {
-            _forces.Remove(force);
-            Acceleration = Forces.Aggregate(Ultraviolet.Vector2.Zero, (a, b) => a + b);
-        }
+        public void ResetAcceleration()
+            => Acceleration = Vector2.Zero;
 
         public virtual void AddTemporaryForce(Vector2 force)
-            => TemporaryForce = TemporaryForce.GetValueOrDefault() + force;
+            => Acceleration += force;
 
         public override void Update()
         {
-            if (TemporaryForce is { } force)
-                Velocity += force + Acceleration;
-            else
-                Velocity += Acceleration;
-            TemporaryForce = null;
+            Velocity += Acceleration;
             base.Update();
         }
     }
