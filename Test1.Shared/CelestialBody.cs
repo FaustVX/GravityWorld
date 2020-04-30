@@ -19,16 +19,24 @@ namespace test1
             set
             {
                 _radius = value;
-                Mass = (int)(Surface * Density);
+                Mass = (int)(Volume * Density);
             }
         }
 
         public float Density { get; private set; }
 
-        public int Surface
+        // 2D World
+        // public int Volume
+        // {
+        //     get => (int)(System.MathF.PI * Radius * Radius);
+        //     set => Radius = (int)System.MathF.Sqrt(value / System.MathF.PI);
+        // }
+
+        // 3D World
+        public int Volume
         {
-            get => (int)(System.MathF.PI * Radius * Radius);
-            set => Radius = (int)System.MathF.Sqrt(value / System.MathF.PI);
+            get => (int)( 4 /3f * System.MathF.PI * Radius * Radius * Radius);
+            set => Radius = (int)System.MathF.Cbrt(value / System.MathF.PI / (4 / 3f));
         }
         
         public int Diametre
@@ -52,7 +60,7 @@ namespace test1
                     var reflected = Vector2.Reflect(o.Velocity, normal);
 
                     var (a, b) = (this, o);
-                    if (b.Mass > a.Mass)
+                    if (b.Mass > a.Mass || b is BlackHole)
                         (a, b) = (b, a);
 
                     a.Merge(b);
@@ -64,9 +72,13 @@ namespace test1
 
         private void Merge(CelestialBody other)
         {
-            Mass += other.Mass;
-            Surface += other.Surface;
-            Density = Mass / Surface;
+            var initialMass = Mass;
+            var volume = Volume + other.Volume;
+            var mass = Mass + other.Mass;
+            Density = mass / volume;
+            Volume = volume;
+            Mass = mass;
+
             AddTemporaryForce(other.Velocity);
             other.Radius = 0;
             Selected |= other.Selected;
@@ -83,13 +95,24 @@ namespace test1
         public void Draw(SpriteBatch sb, Vector2 offset, Movable? reference)
         {
             var origin = new Vector2(Texture.Width, Texture.Height) / 2;
-            sb.Draw(Texture, Position - offset, null, (Selected ? Color.LawnGreen : Color.White) * .75f, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
+            sb.Draw(Texture, Position - offset, null, (Selected ? Color.LawnGreen : Color) * .75f, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
             sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Acceleration) * Radius / 2, null, Color.Red, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
             if(reference is Movable body && !object.ReferenceEquals(this, body))
                 sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Velocity - body.Velocity) * Radius / 4, null, Color.Blue, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
             else
                 sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Velocity) * Radius / 4, null, Color.Blue, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
             sb.Draw(Globals.Pixel, Position - offset, Color.Black);
+        }
+
+        protected Color Color { get; set; } = Color.White;
+    }
+
+    public class BlackHole : CelestialBody
+    {
+        public BlackHole(int radius, float density)
+            : base(radius, density * 100)
+        {
+            Color = Color.DarkSlateGray;
         }
     }
 }

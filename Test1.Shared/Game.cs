@@ -156,7 +156,7 @@ namespace test1
                 }
                 else
                 {
-                    window.Caption = SelectedMover is CelestialBody m1 ? $"{(int)fps}fps -- {m1.Mass}kg - {m1.Density:0.00000}kg/m2 - {m1.Surface}m2 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : $"{(int)fps}fps";
+                    window.Caption = SelectedMover is CelestialBody m1 ? $"{(int)fps}fps -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : $"{(int)fps}fps";
                     offset = SelectedMover is CelestialBody m ? _offset + m.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : _offset;
                 }
                 
@@ -186,7 +186,7 @@ namespace test1
                                 Ultraviolet.GetPlatform().Windows.GetPrimary().Caption += $" -- pointed gravity: {magnitude:0.00000}m/s/s";
 #endif
 
-                            magnitude *= 1_000;
+                            magnitude *= 7;
                             var color = magnitude <= 1 ? Color.Green.Interpolate(Color.Blue, magnitude) : Color.Red.Interpolate(Color.Blue, 1 / (magnitude));
 
                             spriteBatch.Draw(Globals.Pixel, new RectangleF(x * size, y * size, size, size), color);
@@ -215,21 +215,29 @@ namespace test1
         {
             var rng = new Random();
             var window = Ultraviolet.GetPlatform().Windows.GetPrimary().ClientSize;
-            var border = 50;
-            var velocity = 75;
+            var border = -10;
+            var velocity = 300;
             var velRatio = 1000f;
             
-            _movers = new List<CelestialBody>(rng.Next(700, 800) / 15);
-            for (int i = 0; i < _movers.Capacity; i++)
+            _movers = new List<CelestialBody>(100);
+            for (int i = 1; i < _movers.Capacity; i++)
             {
                 var mover = new CelestialBody(rng.Next(5, 15), (float)rng.NextDouble() * 25)
                 {
                     Position = new Vector2(rng.Next(border, window.Width - border), rng.Next(border, window.Height - border)),
-                    // Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / velRatio,
+                    Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / velRatio,
                     Texture = texture
                 };
                 _movers.Add(mover);
             }
+            var hole = new BlackHole(rng.Next(5, 15), (float)rng.NextDouble() * 25)
+            {
+                Position = new Vector2(rng.Next(border, window.Width - border), rng.Next(border, window.Height - border)),
+                // Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / (velRatio / 10),
+                Texture = texture
+            };
+            _movers.Add(hole);
+            _movers.Reverse();
             _offset = Vector2.Zero;
 
             _ship.Position = new Vector2(window.Width, window.Height) / 2;
