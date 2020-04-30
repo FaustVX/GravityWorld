@@ -9,6 +9,12 @@ namespace test1.Input
         public static GlobalActions GetGlobalActions(this IUltravioletInput input) =>
             GlobalActions.Instance;
 
+        public static ShipActions GetShipActions(this IUltravioletInput input) =>
+            ShipActions.Instance;
+
+        public static NotInShipActions GetNotInShipActions(this IUltravioletInput input) =>
+            NotInShipActions.Instance;
+
         public abstract class MovementActions<T> : Actions<T>
             where T : MovementActions<T>
         {
@@ -29,14 +35,11 @@ namespace test1.Input
             public InputAction Right { get; } = null!;
         }
 
-        public sealed class GlobalActions : MovementActions<GlobalActions>
+        public sealed class GlobalActions : Actions<GlobalActions>
         {
             public GlobalActions(UltravioletContext uv)
                 : base(uv)
             { }
-
-            [field: Action(Key.Escape, "EXIT")]
-            public InputAction ExitApplication { get; } = null!;
 
             [field: Action(Key.R, "RESTART")]
             public InputAction RestartApplication { get; } = null!;
@@ -44,8 +47,8 @@ namespace test1.Input
             [field: Action(Key.Tab, "NEXT_PLANET")]
             public InputAction NextPlanet { get; } = null!;
 
-            [field: Action(Key.Delete, "DELETE_PLANET")]
-            public InputAction DeletePlanet { get; } = null!;
+            [field: Action(Key.Escape, "DESELECT_PLANET")]
+            public InputAction DeselectPlanet { get; } = null!;
 
             [field: Action(Key.Space, "PLAY_SIMULATION")]
             public InputAction PlaySimulation { get; } = null!;
@@ -55,6 +58,38 @@ namespace test1.Input
 
             [field: Action(Key.Backspace, "SHOW_GRAVTY")]
             public InputAction ShowGravity { get; } = null!;
+        }
+
+        public sealed class NotInShipActions : MovementActions<NotInShipActions>
+        {
+            public NotInShipActions(UltravioletContext uv)
+                : base(uv)
+            { }
+
+            [field: Action(Key.Delete, "DELETE_PLANET")]
+            public InputAction DeletePlanet { get; } = null!;
+
+            [field: Action(Key.RightControl, "ENTER_SHIP")]
+            public InputAction EnterShip { get; } = null!;
+        }
+
+        public sealed class ShipActions : Actions<ShipActions>
+        {
+            public ShipActions(UltravioletContext uv)
+                : base(uv)
+            { }
+
+            [field: Action(Key.RightControl, "EXIT_SHIP")]
+            public InputAction ExitShip { get; } = null!;
+
+            [field: Action(Key.Up, "FORWARD")]
+            public InputAction Forward { get; } = null!;
+
+            [field: Action(Key.Left, "LEFT")]
+            public InputAction Left { get; } = null!;
+
+            [field: Action(Key.Right, "RIGHT")]
+            public InputAction Right { get; } = null!;
         }
     }
 }
