@@ -193,8 +193,8 @@ namespace test1
                         }
                 }
                 foreach (var mover in _movers.Where(mover => new RectangleF(Point2F.Zero, window.ClientSize).Contains(mover.Position - offset)))
-                    mover.Draw(spriteBatch, offset);
-                _ship.Draw(spriteBatch, _inShip ? _ship.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : offset);
+                    mover.Draw(spriteBatch, offset, _inShip ? (Movable)_ship : SelectedMover);
+                _ship.Draw(spriteBatch, _inShip ? _ship.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : offset, SelectedMover);
             }
 
             base.OnDrawing(time);

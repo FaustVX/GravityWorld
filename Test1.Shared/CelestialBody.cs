@@ -80,12 +80,15 @@ namespace test1
             return true;
         }
 
-        public void Draw(SpriteBatch sb, Vector2 offset)
+        public void Draw(SpriteBatch sb, Vector2 offset, Movable? reference)
         {
             var origin = new Vector2(Texture.Width, Texture.Height) / 2;
             sb.Draw(Texture, Position - offset, null, (Selected ? Color.LawnGreen : Color.White) * .75f, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
             sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Acceleration) * Radius / 2, null, Color.Red, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
-            sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Velocity) * Radius / 4, null, Color.Blue, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
+            if(reference is Movable body && !object.ReferenceEquals(this, body))
+                sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Velocity - body.Velocity) * Radius / 4, null, Color.Blue, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
+            else
+                sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Velocity) * Radius / 4, null, Color.Blue, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
             sb.Draw(Globals.Pixel, Position - offset, Color.Black);
         }
     }
