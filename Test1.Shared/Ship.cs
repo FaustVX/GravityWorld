@@ -9,7 +9,7 @@ namespace test1
         public Ship()
             : base(50)
         {
-            AngleFriction = .9f;
+            AngleFriction = .85f;
         }
 
         public void AddTemporaryForce(Vector2 force, bool local)

@@ -85,6 +85,9 @@ namespace test1.Input
             [field: Action(Key.Up, "FORWARD")]
             public InputAction Forward { get; } = null!;
 
+            [field: Action(Key.Down, "BACKWARD")]
+            public InputAction Backward { get; } = null!;
+
             [field: Action(Key.Left, "LEFT")]
             public InputAction Left { get; } = null!;
 

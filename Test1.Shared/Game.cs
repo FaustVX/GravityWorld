@@ -92,12 +92,17 @@ namespace test1
                 }
                 
                 var isShiftDown = Ultraviolet.GetInput().GetKeyboard().IsShiftDown;
-                if(actions.Forward.IsDown())
-                    _ship.AddTemporaryForce(Vector2.UnitY * (isShiftDown ? 1500f : 400f), local: true);
+                var vector = Vector2.UnitY * (isShiftDown ? 1500f : 400f);
+                var rotation = isShiftDown ? 200f : 70f;
+
+                if (actions.Forward.IsDown())
+                    _ship.AddTemporaryForce(vector, local: true);
+                if(actions.Backward.IsDown())
+                    _ship.AddTemporaryForce(-vector, local: true);
                 if (actions.Left.IsDown())
-                    _ship.AngleVelocity = isShiftDown ? 20f : 10f;
+                    _ship.AngleAcceleration -= rotation;
                 if(actions.Right.IsDown())
-                    _ship.AngleVelocity = -(isShiftDown ? 20f : 10f);
+                    _ship.AngleAcceleration += rotation;
             }
             else
             {
