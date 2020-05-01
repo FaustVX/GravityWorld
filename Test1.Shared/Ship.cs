@@ -8,17 +8,8 @@ namespace test1
     {
         public Ship()
             : base(50)
-        { }
-
-        private float _rotation;
-        public float Rotation
         {
-            get => _rotation;
-            set
-            {
-                var twoPi = MathF.PI * 2;
-                _rotation = ((value % twoPi) + twoPi) % twoPi;
-            }
+            AngleFriction = .9f;
         }
 
         public void AddTemporaryForce(Vector2 force, bool local)
