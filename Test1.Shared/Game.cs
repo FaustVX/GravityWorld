@@ -98,7 +98,7 @@ namespace test1
                 if (actions.Forward.IsDown())
                     _ship.AddTemporaryForce(vector, local: true);
                 if(actions.Backward.IsDown())
-                    _ship.AddTemporaryForce(-vector, local: true);
+                    _ship.AddTemporaryForce(vector / 3, local: true);
                 if (actions.Left.IsDown())
                     _ship.AngleAcceleration -= rotation;
                 if(actions.Right.IsDown())
