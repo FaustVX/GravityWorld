@@ -66,11 +66,32 @@ namespace test1
                     a.Merge(b);
                     other.AddTemporaryForce(force);
                 }
-                else if (other is Ship ship && vector.Length() <= Radius)
-                {
-                    var relativeVelocity = ship.Velocity - Velocity;
-                    ship.Velocity = Velocity;
-                }
+                else if (other is Ship ship)
+                    if(vector.Length() <= Radius * 1.15f)
+                    {
+                        ship.Friction = .5f;
+                    }
+                    else if(vector.Length() <= Radius * .95f)
+                    {
+                        var relativeVelocity = ship.Velocity - Velocity;
+                        // if (relativeVelocity.Length() >= 5)
+                        //     ;
+                        ship.AddTemporaryForce(-force);
+                        ship.Friction = .25f;
+                    }
+                    else if(vector.Length() <= Radius * .9f)
+                    {
+                        var relativeVelocity = ship.Velocity - Velocity;
+                        // if (relativeVelocity.Length() >= 5)
+                        //     ;
+                        ship.AddTemporaryForce(-force);
+                        ship.Friction = .05f;
+                    }
+                    else
+                    {
+                        other.AddTemporaryForce(force);
+                        ship.Friction = 1;
+                    }
                 else
                     other.AddTemporaryForce(force);
             }
