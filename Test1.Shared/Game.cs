@@ -207,6 +207,8 @@ namespace test1
                 foreach (var mover in _movers.Where(mover => new RectangleF(Point2F.Zero, window.ClientSize).Contains(mover.Position - offset)))
                     mover.Draw(spriteBatch, offset, _inShip ? (Movable)_ship : SelectedMover);
                 _ship.Draw(spriteBatch, _inShip ? _ship.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : offset, SelectedMover);
+                _ship.Draw(spriteBatch, new Vector2(100, 50), SelectedMover, zoom: 4);
+                SelectedMover?.Draw(spriteBatch, new Vector2(100, 250), _inShip ? _ship : null, zoom: 3);
             }
 
             base.OnDrawing(time);

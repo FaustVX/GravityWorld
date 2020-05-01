@@ -98,16 +98,19 @@ namespace test1
             return true;
         }
 
-        public void Draw(SpriteBatch sb, Vector2 offset, Movable? reference)
+        public void Draw(SpriteBatch sb, Vector2 offset, Movable? reference, int zoom = 1)
         {
+            var isZommed = zoom != 1;
+            var diametre = Diametre * zoom;
+            var radius = diametre / 2;
             var origin = new Vector2(Texture.Width, Texture.Height) / 2;
-            sb.Draw(Texture, Position - offset, null, (Selected ? Color.LawnGreen : Color) * .75f, 0f, origin, (float)Diametre / Texture.Width, SpriteEffects.None, 0f);
-            sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Acceleration) * Radius / 2, null, Color.Red, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
+            sb.Draw(Texture, isZommed ? offset : Position - offset, null, (Selected && !isZommed ? Color.LawnGreen : Color) * .75f, 0f, origin, (float)diametre / Texture.Width, SpriteEffects.None, 0f);
+            sb.Draw(Globals.Pixel, (isZommed ? offset : Position - offset) + Vector2.Normalize(Acceleration) * radius / 2, null, Color.Red, 0f, Vector2.One/2, zoom * 2f, SpriteEffects.None, 0f);
             if(reference is Movable body && !object.ReferenceEquals(this, body))
-                sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Velocity - body.Velocity) * Radius / 4, null, Color.Blue, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
+                sb.Draw(Globals.Pixel, (isZommed ? offset : Position - offset) + Vector2.Normalize(Velocity - body.Velocity) * radius / 4, null, Color.Blue, 0f, Vector2.One/2, zoom * 2f, SpriteEffects.None, 0f);
             else
-                sb.Draw(Globals.Pixel, Position - offset + Vector2.Normalize(Velocity) * Radius / 4, null, Color.Blue, 0f, Vector2.One/2, 2f, SpriteEffects.None, 0f);
-            sb.Draw(Globals.Pixel, Position - offset, Color.Black);
+                sb.Draw(Globals.Pixel, (isZommed ? offset : Position - offset) + Vector2.Normalize(Velocity) * radius / 4, null, Color.Blue, 0f, Vector2.One/2, zoom * 2f, SpriteEffects.None, 0f);
+            sb.Draw(Globals.Pixel, isZommed ? offset : Position - offset, Color.Black);
         }
 
         protected Color Color { get; set; } = Color.White;
