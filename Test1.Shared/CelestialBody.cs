@@ -64,9 +64,15 @@ namespace test1
                         (a, b) = (b, a);
 
                     a.Merge(b);
+                    other.AddTemporaryForce(force);
                 }
-
-                other.AddTemporaryForce(force);
+                else if (other is Ship ship && vector.Length() <= Radius)
+                {
+                    var relativeVelocity = ship.Velocity - Velocity;
+                    ship.Velocity = Velocity;
+                }
+                else
+                    other.AddTemporaryForce(force);
             }
         }
 
