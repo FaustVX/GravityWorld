@@ -258,11 +258,13 @@ namespace test1
             _movers.Reverse();
             _offset = Vector2.Zero;
 
-            _ship.Position = new Vector2(window.Width, window.Height) / 2;
+            var selected = _movers[1];
+            _ship.Position = selected.Position + -Vector2.UnitY * selected.Radius;
+            _ship.Velocity = selected.Velocity;
             _ship.ResetAccelerations();
             _ship.Rotation = 0;
             _ship.AngleVelocity = 0;
-            _ship.Velocity = Vector2.Zero;
+            SelectedMover = selected;
         }
 
         private ContentManager contentManager = null!;
