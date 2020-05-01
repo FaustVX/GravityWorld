@@ -237,7 +237,7 @@ namespace test1
             var velocity = 800;
             var velRatio = 100f;
             
-            _movers = new List<CelestialBody>(100);
+            _movers = new List<CelestialBody>(200);
             for (int i = 1; i < _movers.Capacity; i++)
             {
                 var mover = new CelestialBody(rng.Next(5, 15), (float)rng.NextDouble() * 25)
