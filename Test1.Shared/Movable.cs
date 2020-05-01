@@ -6,9 +6,9 @@ namespace test1
     {
         public Vector2 Velocity { get; set; }
 
-        public virtual void Update()
+        public virtual void Update(UltravioletTime time)
         {
-            Position += Velocity;
+            Position += Velocity * (float)time.ElapsedTime.TotalSeconds;
         }
     }
 }

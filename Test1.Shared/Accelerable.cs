@@ -14,10 +14,10 @@ namespace test1
         public virtual void AddTemporaryForce(Vector2 force)
             => Acceleration += force;
 
-        public override void Update()
+        public override void Update(UltravioletTime time)
         {
-            Velocity += Acceleration;
-            base.Update();
+            Velocity += Acceleration * (float)time.ElapsedTime.TotalSeconds;
+            base.Update(time);
         }
     }
 }

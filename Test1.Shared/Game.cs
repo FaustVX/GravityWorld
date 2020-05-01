@@ -93,7 +93,7 @@ namespace test1
                 }
                 
                 if(actions.Forward.IsDown())
-                    _ship.AddTemporaryForce(Vector2.UnitY * .5f, local: true);
+                    _ship.AddTemporaryForce(Vector2.UnitY * (Ultraviolet.GetInput().GetKeyboard().IsShiftDown ? 750f : 200f), local: true);
                 if(actions.Left.IsDown())
                     _ship.Rotation -= .05f;
                 if(actions.Right.IsDown())
@@ -130,7 +130,7 @@ namespace test1
 
                 _movers.RemoveAll(m => m.Radius is 0);
 
-                _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().ForAll(m => m.Update());
+                _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().ForAll(m => m.Update(time));
             }
             
             base.OnUpdating(time);
@@ -160,7 +160,11 @@ namespace test1
                     offset = SelectedMover is CelestialBody m ? _offset + m.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : _offset;
                 }
                 
+#if DEBUG
+                if (Ultraviolet.GetInput().GetGlobalActions().ShowGravity.IsUp())
+#else
                 if (Ultraviolet.GetInput().GetGlobalActions().ShowGravity.IsDown())
+#endif
                 {
                     var size = 15;
                     var half = size / 2f;
@@ -186,10 +190,13 @@ namespace test1
                                 Ultraviolet.GetPlatform().Windows.GetPrimary().Caption += $" -- pointed gravity: {magnitude:0.00000}m/s/s";
 #endif
 
-                            magnitude *= 7;
-                            var color = magnitude <= 1 ? Color.Green.Interpolate(Color.Blue, magnitude) : Color.Red.Interpolate(Color.Blue, 1 / (magnitude));
+                            magnitude *= Globals.G / 2;
+                            var color = magnitude <= 1 ? Color.Green.Interpolate(Color.Blue, EasingFunction(magnitude, 3)) : Color.Red.Interpolate(Color.Blue, 1 / (magnitude));
 
                             spriteBatch.Draw(Globals.Pixel, new RectangleF(x * size, y * size, size, size), color);
+
+                            static float EasingFunction(float magnitude, byte level)
+                                => MathF.Sqrt(1 - MathF.Pow(magnitude - 1, level * 5 * .4f));
                         }
                 }
                 foreach (var mover in _movers.Where(mover => new RectangleF(Point2F.Zero, window.ClientSize).Contains(mover.Position - offset)))
@@ -213,11 +220,15 @@ namespace test1
 
         private void Reset()
         {
+#if DEBUG
+            var rng = new Random(0);
+#else
             var rng = new Random();
+#endif
             var window = Ultraviolet.GetPlatform().Windows.GetPrimary().ClientSize;
             var border = -10;
-            var velocity = 300;
-            var velRatio = 1000f;
+            var velocity = 800;
+            var velRatio = 100f;
             
             _movers = new List<CelestialBody>(100);
             for (int i = 1; i < _movers.Capacity; i++)
@@ -267,6 +278,10 @@ namespace test1
         private Using.IDisposable _draw = null!;
 
         private Vector2 _offset = Vector2.Zero;
+#if DEBUG
+        private bool _paused = true, _inShip = false;
+#else
         private bool _paused = false, _inShip = true;
+#endif
     }
 }
