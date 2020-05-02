@@ -61,9 +61,9 @@ namespace test1
 
         protected override void OnUpdating(UltravioletTime time)
         {
-            var ups = 1 / time.ElapsedTime.TotalSeconds;
+            _ups = 1 / time.ElapsedTime.TotalSeconds;
             var upsRatio = TargetElapsedTime / time.ElapsedTime;
-            Debug.WriteLine($"UPS: {ups}");
+            Debug.WriteLine($"UPS: {_ups}");
             _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().ForAll(m => m.ResetAccelerations());
             
             var globalActions = Ultraviolet.GetInput().GetGlobalActions();
@@ -166,11 +166,11 @@ namespace test1
 
         protected override void OnDrawing(UltravioletTime time)
         {
-            var fps = 1 / time.ElapsedTime.TotalSeconds;
-            Debug.WriteLine($"FPS: {fps}");
+            _fps = 1 / time.ElapsedTime.TotalSeconds;
+            Debug.WriteLine($"FPS: {_fps}");
             var fpsRatio = TargetElapsedTime / time.ElapsedTime;
             var window = Ultraviolet.GetPlatform().Windows.GetCurrent();
-            window.Caption = $"{(int)fps}fps - {Globals.TimeRatio}s/s";
+            window.Caption = $"{(_paused ? "||" : "")} {(int)_ups}ups - {(int)_fps}fps - {Globals.TimeRatio}s/s";
 
             using (_draw.Start())
             {
@@ -185,7 +185,7 @@ namespace test1
                 }
                 else
                 {
-                    window.Caption += SelectedMover is CelestialBody m1 ? $" -- {(int)fps}fps -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : "";
+                    window.Caption += SelectedMover is CelestialBody m1 ? $" -- {(int)_fps}fps -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : "";
                     offset = SelectedMover is CelestialBody m ? _offset + m.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : _offset;
                 }
                 
@@ -317,5 +317,6 @@ namespace test1
 #else
         private bool _paused = false, _inShip = true;
 #endif
+        private double _ups, _fps;
     }
 }
