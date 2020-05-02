@@ -170,7 +170,7 @@ namespace test1
             Debug.WriteLine($"FPS: {_fps}");
             var fpsRatio = TargetElapsedTime / time.ElapsedTime;
             var window = Ultraviolet.GetPlatform().Windows.GetCurrent();
-            window.Caption = $"{(_paused ? "||" : "")} {(int)_ups}ups - {(int)_fps}fps - {Globals.TimeRatio}s/s";
+            window.Caption = $"{(_paused ? "||" : "")} {(int)_ups}ups - {(int)_fps}fps - {Globals.TimeRatio}s/s - {_movers.Count}planets";
 
             using (_draw.Start())
             {
@@ -185,7 +185,7 @@ namespace test1
                 }
                 else
                 {
-                    window.Caption += SelectedMover is CelestialBody m1 ? $" -- {(int)_fps}fps -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : "";
+                    window.Caption += SelectedMover is CelestialBody m1 ? $" -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : "";
                     offset = SelectedMover is CelestialBody m ? _offset + m.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : _offset;
                 }
                 
@@ -228,6 +228,25 @@ namespace test1
                                 => MathF.Sqrt(1 - MathF.Pow(magnitude - 1, level * 5 * .4f));
                         }
                 }
+                else if (_fps < 50)
+                {
+                    switch (Globals.TimeRatio)
+                    {
+                        case 1:
+                            Globals.MaxPlanets1 = Globals.MaxPlanets2 = Globals.MaxPlanets3 = Globals.MaxPlanets4 = _movers.Count;
+                            break;
+                        case 2:
+                            Globals.MaxPlanets2 = Globals.MaxPlanets3 = Globals.MaxPlanets4 = _movers.Count;
+                            break;
+                        case 4:
+                            Globals.MaxPlanets3 = Globals.MaxPlanets4 = _movers.Count;
+                            break;
+                        case 8:
+                            Globals.MaxPlanets4 = _movers.Count;
+                            break;
+                    }
+                }
+                
                 foreach (var mover in _movers.Where(mover => new RectangleF(Point2F.Zero, window.ClientSize).Contains(mover.Position - offset)))
                     mover.Draw(spriteBatch, offset, _inShip ? (Movable)_ship : SelectedMover);
                 _ship.Draw(spriteBatch, _inShip ? _ship.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : offset, SelectedMover);
@@ -251,17 +270,23 @@ namespace test1
 
         private void Reset()
         {
-#if DEBUG
-            var rng = new Random(0);
-#else
-            var rng = new Random();
-#endif
             var window = Ultraviolet.GetPlatform().Windows.GetPrimary().ClientSize;
             var border = -10;
             var velocity = 800;
             var velRatio = 100f;
-            
-            _movers = new List<CelestialBody>(200);
+#if DEBUG
+            var rng = new Random(0);
+            _movers = new List<CelestialBody>(50);
+#else
+            var rng = new Random();
+            _movers = new List<CelestialBody>(Globals.TimeRatio switch
+            {
+                1 => Globals.MaxPlanets1,
+                2 => Globals.MaxPlanets2,
+                4 => Globals.MaxPlanets3,
+                8 => Globals.MaxPlanets4,
+            });
+#endif
             for (int i = 1; i < _movers.Capacity; i++)
             {
                 var mover = new CelestialBody(rng.Next(5, 15), (float)rng.NextDouble() * 25)
