@@ -58,6 +58,18 @@ namespace test1.Input
 
             [field: Action(Key.Backspace, "SHOW_GRAVTY")]
             public InputAction ShowGravity { get; } = null!;
+
+            [field: Action(Key.D1, "TIME_RATIO_1")]
+            public InputAction TimeRatio1 { get; } = null!;
+
+            [field: Action(Key.D2, "TIME_RATIO_2")]
+            public InputAction TimeRatio2 { get; } = null!;
+
+            [field: Action(Key.D3, "TIME_RATIO_3")]
+            public InputAction TimeRatio3 { get; } = null!;
+
+            [field: Action(Key.D4, "TIME_RATIO_4")]
+            public InputAction TimeRatio4 { get; } = null!;
         }
 
         public sealed class NotInShipActions : MovementActions<NotInShipActions>

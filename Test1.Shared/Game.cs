@@ -80,29 +80,32 @@ namespace test1
             {
                 SelectedMover = null;
             }
+            else if (globalActions.TimeRatio1.IsPressed())
+            {
+                Globals.TimeRatio = 1;
+            }
+            else if (globalActions.TimeRatio2.IsPressed())
+            {
+                Globals.TimeRatio = 2;
+            }
+            else if (globalActions.TimeRatio3.IsPressed())
+            {
+                Globals.TimeRatio = 4;
+            }
+            else if (globalActions.TimeRatio4.IsPressed())
+            {
+                Globals.TimeRatio = 8;
+            }
             _paused ^= globalActions.PlaySimulation.IsPressed();
             var runThisFrame = !_paused || globalActions.StepSimulation.IsPressed(ignoreRepeats: false);
 
-            if(_inShip)
+            if (_inShip)
             {
                 var actions = Ultraviolet.GetInput().GetShipActions();
                 if (actions.ExitShip.IsPressed())
                 {
                     _inShip = false;
                 }
-                
-                var isShiftDown = Ultraviolet.GetInput().GetKeyboard().IsShiftDown;
-                var vector = Vector2.UnitY * (isShiftDown ? 1500f : 400f);
-                var rotation = isShiftDown ? 200f : 70f;
-
-                if (actions.Forward.IsDown())
-                    _ship.AddTemporaryForce(vector, local: true);
-                if(actions.Backward.IsDown())
-                    _ship.AddTemporaryForce(vector / 3, local: true);
-                if (actions.Left.IsDown())
-                    _ship.AngleAcceleration -= rotation;
-                if(actions.Right.IsDown())
-                    _ship.AngleAcceleration += rotation;
             }
             else
             {
@@ -128,14 +131,34 @@ namespace test1
                     _offset += Vector2.UnitX * offsetSpeed;
             }
 
-            if (runThisFrame)
+            var timeRatio = Globals.TimeRatio;
+            while (runThisFrame && timeRatio-- > 0)
             {
+                if(_inShip)
+                {
+                    var actions = Ultraviolet.GetInput().GetShipActions();
+                    var isShiftDown = Ultraviolet.GetInput().GetKeyboard().IsShiftDown;
+                    var vector = Vector2.UnitY * (isShiftDown ? 1500f : 400f);
+
+                    if (actions.Forward.IsDown())
+                        _ship.AddTemporaryForce(vector, local: true);
+                    if(actions.Backward.IsDown())
+                        _ship.AddTemporaryForce(vector / 3, local: true);
+                    if (actions.Left.IsDown())
+                        _ship.AngleAcceleration -= 70f;
+                    if(actions.Right.IsDown())
+                        _ship.AngleAcceleration += 70f;
+                }
+
                 foreach (var mover in _movers)
                     _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().Where(other => ! object.ReferenceEquals(mover, other)).ForAll(mover.Attract);
 
                 _movers.RemoveAll(m => m.Radius is 0);
 
                 _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().ForAll(m => m.Update(time));
+
+                if( timeRatio > 0)
+                    _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().ForAll(m => m.ResetAccelerations());
             }
             
             base.OnUpdating(time);
@@ -147,13 +170,14 @@ namespace test1
             Debug.WriteLine($"FPS: {fps}");
             var fpsRatio = TargetElapsedTime / time.ElapsedTime;
             var window = Ultraviolet.GetPlatform().Windows.GetCurrent();
+            window.Caption = $"{(int)fps}fps - {Globals.TimeRatio}s/s";
 
             using (_draw.Start())
             {
                 var offset = _ship.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2;
                 if (_inShip)
                 {
-                    window.Caption = $"{(int)fps}fps -- {_ship.Mass}kg - {_ship.Velocity.Length():0.00000}m/s - {_ship.Acceleration.Length():0.00000}m/s/s - {_ship.Rotation:0.00000}rad - {_ship.AngleVelocity:0.00000}rad/s - {_ship.AngleAcceleration:0.00000}rad/s/s";
+                    window.Caption += $" -- {_ship.Mass}kg - {_ship.Velocity.Length():0.00000}m/s - {_ship.Acceleration.Length():0.00000}m/s/s - {_ship.Rotation:0.00000}rad - {_ship.AngleVelocity:0.00000}rad/s - {_ship.AngleAcceleration:0.00000}rad/s/s";
                     if(SelectedMover is CelestialBody body)
                     {
                         window.Caption += $" -- {(_ship.Position - body.Position).Length():0.00}m - {(_ship.Velocity - body.Velocity).Length():0.00}m/s";
@@ -161,7 +185,7 @@ namespace test1
                 }
                 else
                 {
-                    window.Caption = SelectedMover is CelestialBody m1 ? $"{(int)fps}fps -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : $"{(int)fps}fps";
+                    window.Caption += SelectedMover is CelestialBody m1 ? $" -- {(int)fps}fps -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : "";
                     offset = SelectedMover is CelestialBody m ? _offset + m.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : _offset;
                 }
                 
