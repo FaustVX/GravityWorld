@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Ultraviolet;
 using Ultraviolet.BASS;
 using Ultraviolet.Content;
@@ -62,13 +61,16 @@ namespace test1
         protected override void OnUpdating(UltravioletTime time)
         {
             _ups = 1 / time.ElapsedTime.TotalSeconds;
-            var upsRatio = TargetElapsedTime / time.ElapsedTime;
+            // var upsRatio = TargetElapsedTime / time.ElapsedTime;
             Debug.WriteLine($"UPS: {_ups}");
-            _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().ForAll(m => m.ResetAccelerations());
+            _ship.ResetAccelerations();
+            for (int i = 0; i < _movers.Count; i++)
+                _movers[i].ResetAccelerations();
             
             var globalActions = Ultraviolet.GetInput().GetGlobalActions();
             if (globalActions.RestartApplication.IsPressed())
             {
+                _paused = true;
                 Reset();
             }
             else if (globalActions.NextPlanet.IsPressed())
@@ -96,13 +98,15 @@ namespace test1
             {
                 Globals.TimeRatio = 8;
             }
-            _paused ^= globalActions.PlaySimulation.IsPressed();
+            TogglePause(globalActions.PlaySimulation.IsPressed());
             var runThisFrame = !_paused || globalActions.StepSimulation.IsPressed(ignoreRepeats: false);
+            
+            var shipActions = Ultraviolet.GetInput().GetShipActions();
+            var isShiftDown = Ultraviolet.GetInput().GetKeyboard().IsShiftDown;
 
             if (_inShip)
             {
-                var actions = Ultraviolet.GetInput().GetShipActions();
-                if (actions.ExitShip.IsPressed())
+                if (shipActions.ExitShip.IsPressed())
                 {
                     _inShip = false;
                 }
@@ -130,63 +134,93 @@ namespace test1
                 if(actions.Right.IsDown())
                     _offset += Vector2.UnitX * offsetSpeed;
             }
+            var vector = Vector2.Zero;
+            var angleAcceleration = 0f;
+
+            if (shipActions.Forward.IsDown())
+                vector += Vector2.UnitY * (isShiftDown ? 1500f : 400f);
+            if(shipActions.Backward.IsDown())
+                vector += -Vector2.UnitY * (isShiftDown ? 1500f : 400f) / 3;
+            if (shipActions.Left.IsDown())
+                angleAcceleration -= 70f;
+            if(shipActions.Right.IsDown())
+                angleAcceleration += 70f;
 
             var timeRatio = Globals.TimeRatio;
             while (runThisFrame && timeRatio-- > 0)
             {
                 if(_inShip)
                 {
-                    var actions = Ultraviolet.GetInput().GetShipActions();
-                    var isShiftDown = Ultraviolet.GetInput().GetKeyboard().IsShiftDown;
-                    var vector = Vector2.UnitY * (isShiftDown ? 1500f : 400f);
-
-                    if (actions.Forward.IsDown())
-                        _ship.AddTemporaryForce(vector, local: true);
-                    if(actions.Backward.IsDown())
-                        _ship.AddTemporaryForce(vector / 3, local: true);
-                    if (actions.Left.IsDown())
-                        _ship.AngleAcceleration -= 70f;
-                    if(actions.Right.IsDown())
-                        _ship.AngleAcceleration += 70f;
+                    _ship.AddTemporaryForce(vector, local: true);
+                    _ship.AngleAcceleration += angleAcceleration;
                 }
 
-                foreach (var mover in _movers)
-                    _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().Where(other => ! object.ReferenceEquals(mover, other)).ForAll(mover.Attract);
+                for (var i = 0; i < _movers.Count; i++)
+                {
+                    var mover = _movers[i];
+                    mover.Attract(_ship);
+                    for (var j = 0; j < _movers.Count; j++)
+                    {
+                        var other = _movers[j];
+                        if(object.ReferenceEquals(mover, other))
+                            continue;
+                        if((other.Position - mover.Position).LengthSquared() >= mover.CalculateGravityRadiusSquared(1, Globals.MinimumGravityForCalculation))
+                            continue;
+                        mover.Attract(other);
+                    }
+                }
 
-                _movers.RemoveAll(m => m.Radius is 0);
+                if(timeRatio == 0)
+                    _movers.RemoveAll(m => m.Radius is 0);
+                
+                for (var i = 0; i < _movers.Count; i++)
+                    _movers[i].Update(time);
+                
+                for (var i = 0; i < _movers.Count; i++)
+                    if (timeRatio > 0)
+                        _movers[i].ResetAccelerations();
+                
+                _ship.Update(time);
 
-                _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().ForAll(m => m.Update(time));
-
-                if( timeRatio > 0)
-                    _movers.Cast<Mover>().Prepend(_ship).AsParallel().AsUnordered().ForAll(m => m.ResetAccelerations());
+                if(timeRatio > 0)
+                    _ship.ResetAccelerations();
             }
             
             base.OnUpdating(time);
+        }
+
+        private void TogglePause(bool toggle = true)
+        {
+            _paused ^= toggle;
         }
 
         protected override void OnDrawing(UltravioletTime time)
         {
             _fps = 1 / time.ElapsedTime.TotalSeconds;
             Debug.WriteLine($"FPS: {_fps}");
-            var fpsRatio = TargetElapsedTime / time.ElapsedTime;
+            // var fpsRatio = TargetElapsedTime / time.ElapsedTime;
             var window = Ultraviolet.GetPlatform().Windows.GetCurrent();
             window.Caption = $"{(_paused ? "||" : "")} {(int)_ups}ups - {(int)_fps}fps - {Globals.TimeRatio}s/s - {_movers.Count}planets";
+            var selectedMover = SelectedMover;
 
             using (_draw.Start())
             {
-                var offset = _ship.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2;
+                var windowSize = new Vector2(window.ClientSize.Width, window.ClientSize.Height);
+                var centerWindow = windowSize / 2;
+                var offset = _ship.Position - centerWindow;
+
                 if (_inShip)
                 {
                     window.Caption += $" -- {_ship.Mass}kg - {_ship.Velocity.Length():0.00000}m/s - {_ship.Acceleration.Length():0.00000}m/s/s - {_ship.Rotation:0.00000}rad - {_ship.AngleVelocity:0.00000}rad/s - {_ship.AngleAcceleration:0.00000}rad/s/s";
-                    if(SelectedMover is CelestialBody body)
+                    if(selectedMover is CelestialBody body)
                     {
                         window.Caption += $" -- {(_ship.Position - body.Position).Length():0.00}m - {(_ship.Velocity - body.Velocity).Length():0.00}m/s";
                     }
                 }
                 else
                 {
-                    window.Caption += SelectedMover is CelestialBody m1 ? $" -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : "";
-                    offset = SelectedMover is CelestialBody m ? _offset + m.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : _offset;
+                    window.Caption += selectedMover is CelestialBody m1 ? $" -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : "";
+                    offset = selectedMover is CelestialBody m ? _offset + m.Position - centerWindow : _offset;
                 }
                 
 #if DEBUG
@@ -207,8 +241,11 @@ namespace test1
                             var position = new Vector2(x * size + half, y * size + half) + offset;
 
                             var force = Vector2.Zero;
-                            foreach (var mover in _movers)
+                            for (int i = 0; i < _movers.Count; i++)
                             {
+                                var mover = _movers[1];
+                                if ((mover.Position - position).LengthSquared() >= mover.CalculateGravityRadiusSquared(1, Globals.MinimumGravityForCalculation))
+                                    continue;
                                 mover.CalculateGravity(position, 1, out _, out var force2);
                                 force += force2;
                             }
@@ -246,12 +283,14 @@ namespace test1
                             break;
                     }
                 }
-                
-                foreach (var mover in _movers.Where(mover => new RectangleF(Point2F.Zero, window.ClientSize).Contains(mover.Position - offset)))
-                    mover.Draw(spriteBatch, offset, _inShip ? (Movable)_ship : SelectedMover);
-                _ship.Draw(spriteBatch, _inShip ? _ship.Position - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2 : offset, SelectedMover);
-                _ship.Draw(spriteBatch, new Vector2(100, 50), SelectedMover, zoom: 4);
-                SelectedMover?.Draw(spriteBatch, new Vector2(100, 250), _inShip ? _ship : null, zoom: 3);
+
+                var drawingArea = new RectangleF(Point2F.Zero, window.ClientSize);
+                for (var i = 0; i < _movers.Count; i++)
+                    if (drawingArea.Contains(_movers[i].Position - offset))
+                        _movers[i].Draw(spriteBatch, offset, _inShip ? (Movable)_ship : selectedMover);
+                _ship.Draw(spriteBatch, _inShip ? _ship.Position - centerWindow : offset, selectedMover);
+                _ship.Draw(spriteBatch, new Vector2(100, 50), selectedMover, zoom: 4);
+                selectedMover?.Draw(spriteBatch, new Vector2(100, 250), _inShip ? _ship : null, zoom: 2);
             }
 
             base.OnDrawing(time);
@@ -271,9 +310,9 @@ namespace test1
         private void Reset()
         {
             var window = Ultraviolet.GetPlatform().Windows.GetPrimary().ClientSize;
-            var border = -10;
             var velocity = 800;
             var velRatio = 100f;
+            var worldSize = 5;
 #if DEBUG
             var rng = new Random(0);
             _movers = new List<CelestialBody>(50);
@@ -289,17 +328,17 @@ namespace test1
 #endif
             for (int i = 1; i < _movers.Capacity; i++)
             {
-                var mover = new CelestialBody(rng.Next(5, 15), (float)rng.NextDouble() * 25)
+                var mover = new CelestialBody(rng.Next(5, 35), (float)rng.NextDouble() * 35)
                 {
-                    Position = new Vector2(rng.Next(border, window.Width - border), rng.Next(border, window.Height - border)),
+                    Position = new Vector2(rng.Next(window.Width * -worldSize, window.Width * (worldSize+1)), rng.Next(window.Height * -worldSize, window.Height * (worldSize+1))),
                     Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / velRatio,
                     Texture = texture
                 };
                 _movers.Add(mover);
             }
-            var hole = new BlackHole(rng.Next(5, 15), (float)rng.NextDouble() * 25)
+            var hole = new BlackHole(rng.Next(15, 50), (float)rng.NextDouble() * 35)
             {
-                Position = new Vector2(rng.Next(border, window.Width - border), rng.Next(border, window.Height - border)),
+                Position = new Vector2(rng.Next(window.Width * -worldSize, window.Width * (worldSize+1)), rng.Next(window.Height * -worldSize, window.Height * (worldSize+1))),
                 // Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / (velRatio / 10),
                 Texture = texture
             };
@@ -323,7 +362,7 @@ namespace test1
         private List<CelestialBody> _movers = null!;
         private CelestialBody? SelectedMover
         {
-            get => _movers.FirstOrDefault(m => m.Selected);
+            get => System.Linq.Enumerable.FirstOrDefault(_movers, m => m.Selected);
             set
             {
                 foreach (var mover in _movers)

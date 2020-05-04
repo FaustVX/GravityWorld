@@ -119,6 +119,12 @@ namespace test1
             return true;
         }
 
+        public float CalculateGravityRadiusSquared(float mass, float minimumGravity)
+            => (Globals.G * Mass * mass) / minimumGravity;
+
+        public float CalculateGravityRadius(float mass, float minimumGravity)
+            => System.MathF.Sqrt(CalculateGravityRadiusSquared(mass, minimumGravity));
+
         public void Draw(SpriteBatch sb, Vector2 offset, Movable? reference, int zoom = 1)
         {
             var isZommed = zoom != 1;
