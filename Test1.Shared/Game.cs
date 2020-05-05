@@ -9,6 +9,7 @@ using Ultraviolet.Graphics;
 using Ultraviolet.Graphics.Graphics2D;
 using Ultraviolet.OpenGL;
 using static test1.Input.MyInputs;
+using System.Threading;
 
 namespace test1
 {
@@ -16,7 +17,64 @@ namespace test1
     {
         public Game()
             : base("FaustVX", "My Test1")
-        { }
+        {
+            _gravityThread = new Thread(CalculateGravityField);
+
+            void CalculateGravityField()
+            {
+                var size = 8;
+                var window = Ultraviolet.GetPlatform().Windows.GetPrimary();
+
+                while (true)
+                    if(_ship is Ship ship && _movers?.ToArray() is CelestialBody[] movers && SelectedMover is var selectedMover)
+                    {
+                        var windowSize = new Vector2(window.ClientSize.Width, window.ClientSize.Height);
+                        var centerWindow = windowSize / 2;
+                        
+                        var width = (window.ClientSize.Width / size) + 1;
+                        var height = (window.ClientSize.Height / size) + 1;
+                        var field = new (Rectangle rect, Color color)[width, height];
+                        var half = size / 2f;
+#if DEBUG
+                        var mouse = Ultraviolet.GetInput().GetMouse().Position;
+#endif
+                        var offset = ship.Position - centerWindow;
+                        if (!_inShip)
+                            offset = selectedMover is CelestialBody m ? _offset + m.Position - centerWindow : _offset;
+
+                        for (var x = 0; x < width; x++)
+                            for (var y = 0; y < height; y++)
+                            {
+                                var position = new Vector2(x * size + half, y * size + half) + offset;
+
+                                var force = Vector2.Zero;
+                                for (int i = 0; i < movers.Length; i++)
+                                {
+                                    var mover = movers[i];
+                                    if ((mover.Position - position).LengthSquared() >= mover.CalculateGravityRadiusSquared(1, Globals.MinimumGravityForCalculation))
+                                        continue;
+                                    mover.CalculateGravity(position, 1, out _, out var force2);
+                                    force += force2;
+                                }
+                                var magnitude = force.Length();
+#if DEBUG
+                                var rect = new RectangleF(position.X, position.Y, size, size);
+                                if(rect.Contains(mouse.X + offset.X, mouse.Y + offset.Y))
+                                    Ultraviolet.GetPlatform().Windows.GetPrimary().Caption += $" -- pointed gravity: {magnitude:0.00000}m/s/s";
+#endif
+
+                                magnitude *= Globals.G / 2;
+                                var color = magnitude <= 1 ? Color.Green.Interpolate(Color.Blue, EasingFunction(magnitude, 3)) : Color.Red.Interpolate(Color.Blue, 1 / (magnitude));
+
+                                field[x, y] = (new Rectangle(x * size, y * size, size, size), color);
+
+                                static float EasingFunction(float magnitude, byte level)
+                                    => MathF.Sqrt(1 - MathF.Pow(magnitude - 1, level * 5 * .4f));
+                            }
+                        _gravityField = field;
+                    }
+            }
+        }
 
         protected override UltravioletContext OnCreatingUltravioletContext()
         {
@@ -229,41 +287,19 @@ namespace test1
                 if (Ultraviolet.GetInput().GetGlobalActions().ShowGravity.IsDown())
 #endif
                 {
-                    var size = 15;
-                    var half = size / 2f;
-                    var width = (window.ClientSize.Width / size) + 1;
-                    var height = (window.ClientSize.Height / size) + 1;
-                    var mouse = Ultraviolet.GetInput().GetMouse().Position;
-
-                    for (int x = 0; x < width; x++)
-                        for (int y = 0; y < height; y++)
-                        {
-                            var position = new Vector2(x * size + half, y * size + half) + offset;
-
-                            var force = Vector2.Zero;
-                            for (int i = 0; i < _movers.Count; i++)
+                    if (_gravityField is (Rectangle rect, Color color)[,] field)
+                    {
+                        var width = _gravityField.GetLength(0);
+                        var height = _gravityField.GetLength(1);
+                        for (var x = 0; x < width; x++)
+                            for (var y = 0; y < height; y++)
                             {
-                                var mover = _movers[1];
-                                if ((mover.Position - position).LengthSquared() >= mover.CalculateGravityRadiusSquared(1, Globals.MinimumGravityForCalculation))
-                                    continue;
-                                mover.CalculateGravity(position, 1, out _, out var force2);
-                                force += force2;
+                                var info = field[x, y];
+                                spriteBatch.Draw(Globals.Pixel, info.rect, info.color);
                             }
-                            var magnitude = force.Length();
-#if DEBUG
-                            var rect = new RectangleF(position.X, position.Y, size, size);
-                            if(rect.Contains(mouse.X + offset.X, mouse.Y + offset.Y))
-                                Ultraviolet.GetPlatform().Windows.GetPrimary().Caption += $" -- pointed gravity: {magnitude:0.00000}m/s/s";
-#endif
-
-                            magnitude *= Globals.G / 2;
-                            var color = magnitude <= 1 ? Color.Green.Interpolate(Color.Blue, EasingFunction(magnitude, 3)) : Color.Red.Interpolate(Color.Blue, 1 / (magnitude));
-
-                            spriteBatch.Draw(Globals.Pixel, new RectangleF(x * size, y * size, size, size), color);
-
-                            static float EasingFunction(float magnitude, byte level)
-                                => MathF.Sqrt(1 - MathF.Pow(magnitude - 1, level * 5 * .4f));
-                        }
+                    }
+                    if (!_gravityThread.IsAlive)
+                        _gravityThread.Start();
                 }
                 else if (_fps < 50)
                 {
@@ -315,10 +351,10 @@ namespace test1
             var worldSize = 5;
 #if DEBUG
             var rng = new Random(0);
-            _movers = new List<CelestialBody>(50);
+            var movers = new List<CelestialBody>(50);
 #else
             var rng = new Random();
-            _movers = new List<CelestialBody>(Globals.TimeRatio switch
+            var movers = new List<CelestialBody>(Globals.TimeRatio switch
             {
                 1 => Globals.MaxPlanets1,
                 2 => Globals.MaxPlanets2,
@@ -326,7 +362,7 @@ namespace test1
                 8 => Globals.MaxPlanets4,
             });
 #endif
-            for (int i = 1; i < _movers.Capacity; i++)
+            for (int i = 1; i < movers.Capacity; i++)
             {
                 var mover = new CelestialBody(rng.Next(5, 35), (float)rng.NextDouble() * 35)
                 {
@@ -334,7 +370,7 @@ namespace test1
                     Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / velRatio,
                     Texture = texture
                 };
-                _movers.Add(mover);
+                movers.Add(mover);
             }
             var hole = new BlackHole(rng.Next(15, 50), (float)rng.NextDouble() * 35)
             {
@@ -342,8 +378,9 @@ namespace test1
                 // Velocity = new Vector2(rng.Next(-velocity, velocity), rng.Next(-velocity, velocity)) / (velRatio / 10),
                 Texture = texture
             };
-            _movers.Add(hole);
-            _movers.Reverse();
+            movers.Add(hole);
+            movers.Reverse();
+            _movers = movers;
             _offset = Vector2.Zero;
 
             var selected = _movers[1];
@@ -382,5 +419,7 @@ namespace test1
         private bool _paused = false, _inShip = true;
 #endif
         private double _ups, _fps;
+        private (Rectangle rect, Color color)[,] _gravityField = null!;
+        private readonly Thread _gravityThread;
     }
 }
