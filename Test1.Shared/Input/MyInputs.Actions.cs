@@ -17,7 +17,7 @@ namespace test1.Input
             /// <inheritdoc/>
             protected override void OnCreatingActions()
             {
-                ActionAttribute.SetProperty<T, ActionAttribute, InputAction>((T)this, setter: (ActionAttribute attribut) => CreateAction(attribut.Name));
+                ActionAttribute.SetProperty<T, ActionAttribute, InputAction>((T)this, setter: (ActionAttribute attribut) => new InputAction(CreateAction(attribut.Name), attribut.ClicType));
 
                 base.OnCreatingActions();
             }

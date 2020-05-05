@@ -11,14 +11,16 @@ namespace test1.Input
         [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
         private sealed class ActionAttribute : Attribute
         {
-            public ActionAttribute(Key key, string name)
+            public ActionAttribute(Key key, string name, InputAction.ClicType clicType)
             {
                 Key = key;
                 Name = name;
+                ClicType = clicType;
             }
 
             public Key Key { get; }
             public string Name { get; }
+            public InputAction.ClicType ClicType { get; }
 
             public static void SetProperty<T, TAttribute, TProperty>(T @this, Action<TAttribute, TProperty>? getter = null, Func<TAttribute, TProperty>? setter = null)
                 where TAttribute : Attribute

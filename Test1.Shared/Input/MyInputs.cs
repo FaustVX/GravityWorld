@@ -1,6 +1,7 @@
 using System;
 using Ultraviolet;
 using Ultraviolet.Input;
+using ClicType = test1.Input.MyInputs.InputAction.ClicType;
 
 namespace test1.Input
 {
@@ -22,16 +23,16 @@ namespace test1.Input
                 : base(uv)
             { }
 
-            [field: Action(Key.Up, "UP")]
+            [field: Action(Key.Up, "UP", ClicType.Down)]
             public InputAction Up { get; } = null!;
 
-            [field: Action(Key.Down, "DOWN")]
+            [field: Action(Key.Down, "DOWN", ClicType.Down)]
             public InputAction Down { get; } = null!;
 
-            [field: Action(Key.Left, "LEFT")]
+            [field: Action(Key.Left, "LEFT", ClicType.Down)]
             public InputAction Left { get; } = null!;
 
-            [field: Action(Key.Right, "RIGHT")]
+            [field: Action(Key.Right, "RIGHT", ClicType.Down)]
             public InputAction Right { get; } = null!;
         }
 
@@ -41,34 +42,38 @@ namespace test1.Input
                 : base(uv)
             { }
 
-            [field: Action(Key.R, "RESTART")]
+            [field: Action(Key.R, "RESTART", ClicType.Pressed)]
             public InputAction RestartApplication { get; } = null!;
 
-            [field: Action(Key.Tab, "NEXT_PLANET")]
+            [field: Action(Key.Tab, "NEXT_PLANET", ClicType.Pressed)]
             public InputAction NextPlanet { get; } = null!;
 
-            [field: Action(Key.Escape, "DESELECT_PLANET")]
+            [field: Action(Key.Escape, "DESELECT_PLANET", ClicType.Pressed)]
             public InputAction DeselectPlanet { get; } = null!;
 
-            [field: Action(Key.Space, "PLAY_SIMULATION")]
+            [field: Action(Key.Space, "PLAY_SIMULATION", ClicType.Pressed)]
             public InputAction PlaySimulation { get; } = null!;
 
-            [field: Action(Key.Return, "STEP_SIMULATION")]
+            [field: Action(Key.Return, "STEP_SIMULATION", ClicType.PressedRepeated)]
             public InputAction StepSimulation { get; } = null!;
 
-            [field: Action(Key.Backspace, "SHOW_GRAVTY")]
+#if DEBUG
+            [field: Action(Key.Backspace, "SHOW_GRAVTY", ClicType.Up)]
+#else
+            [field: Action(Key.Backspace, "SHOW_GRAVTY", ClicType.Down)]
+#endif
             public InputAction ShowGravity { get; } = null!;
 
-            [field: Action(Key.D1, "TIME_RATIO_1")]
+            [field: Action(Key.D1, "TIME_RATIO_1", ClicType.Pressed)]
             public InputAction TimeRatio1 { get; } = null!;
 
-            [field: Action(Key.D2, "TIME_RATIO_2")]
+            [field: Action(Key.D2, "TIME_RATIO_2", ClicType.Pressed)]
             public InputAction TimeRatio2 { get; } = null!;
 
-            [field: Action(Key.D3, "TIME_RATIO_3")]
+            [field: Action(Key.D3, "TIME_RATIO_3", ClicType.Pressed)]
             public InputAction TimeRatio3 { get; } = null!;
 
-            [field: Action(Key.D4, "TIME_RATIO_4")]
+            [field: Action(Key.D4, "TIME_RATIO_4", ClicType.Pressed)]
             public InputAction TimeRatio4 { get; } = null!;
         }
 
@@ -78,10 +83,10 @@ namespace test1.Input
                 : base(uv)
             { }
 
-            [field: Action(Key.Delete, "DELETE_PLANET")]
+            [field: Action(Key.Delete, "DELETE_PLANET", ClicType.Pressed)]
             public InputAction DeletePlanet { get; } = null!;
 
-            [field: Action(Key.RightControl, "ENTER_SHIP")]
+            [field: Action(Key.RightControl, "ENTER_SHIP", ClicType.Pressed)]
             public InputAction EnterShip { get; } = null!;
         }
 
@@ -91,19 +96,19 @@ namespace test1.Input
                 : base(uv)
             { }
 
-            [field: Action(Key.RightControl, "EXIT_SHIP")]
+            [field: Action(Key.RightControl, "EXIT_SHIP", ClicType.Pressed)]
             public InputAction ExitShip { get; } = null!;
 
-            [field: Action(Key.Up, "FORWARD")]
+            [field: Action(Key.Up, "FORWARD", ClicType.Down)]
             public InputAction Forward { get; } = null!;
 
-            [field: Action(Key.Down, "BACKWARD")]
+            [field: Action(Key.Down, "BACKWARD", ClicType.Down)]
             public InputAction Backward { get; } = null!;
 
-            [field: Action(Key.Left, "LEFT")]
+            [field: Action(Key.Left, "LEFT", ClicType.Down)]
             public InputAction Left { get; } = null!;
 
-            [field: Action(Key.Right, "RIGHT")]
+            [field: Action(Key.Right, "RIGHT", ClicType.Down)]
             public InputAction Right { get; } = null!;
         }
     }

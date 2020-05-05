@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Ship.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\MyInputs.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\MyInputs.Actions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Input\MyInputs.InputAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input\MyInputs.ActionAttribute.cs" />
   </ItemGroup>
   <ItemGroup>

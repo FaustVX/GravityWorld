@@ -126,45 +126,45 @@ namespace test1
                 _movers[i].ResetAccelerations();
             
             var globalActions = Ultraviolet.GetInput().GetGlobalActions();
-            if (globalActions.RestartApplication.IsPressed())
+            if (globalActions.RestartApplication)
             {
                 _paused = true;
                 Reset();
             }
-            else if (globalActions.NextPlanet.IsPressed())
+            else if (globalActions.NextPlanet)
             {
                 var old = _movers.IndexOf(SelectedMover!);
                 SelectedMover = _movers.Count <= 0 ? null! : _movers[(old + 1) % _movers.Count];
             }
-            else if (globalActions.DeselectPlanet.IsPressed())
+            else if (globalActions.DeselectPlanet)
             {
                 SelectedMover = null;
             }
-            else if (globalActions.TimeRatio1.IsPressed())
+            else if (globalActions.TimeRatio1)
             {
                 Globals.TimeRatio = 1;
             }
-            else if (globalActions.TimeRatio2.IsPressed())
+            else if (globalActions.TimeRatio2)
             {
                 Globals.TimeRatio = 2;
             }
-            else if (globalActions.TimeRatio3.IsPressed())
+            else if (globalActions.TimeRatio3)
             {
                 Globals.TimeRatio = 4;
             }
-            else if (globalActions.TimeRatio4.IsPressed())
+            else if (globalActions.TimeRatio4)
             {
                 Globals.TimeRatio = 8;
             }
-            TogglePause(globalActions.PlaySimulation.IsPressed());
-            var runThisFrame = !_paused || globalActions.StepSimulation.IsPressed(ignoreRepeats: false);
+            TogglePause(globalActions.PlaySimulation);
+            var runThisFrame = !_paused || globalActions.StepSimulation;
             
             var shipActions = Ultraviolet.GetInput().GetShipActions();
             var isShiftDown = Ultraviolet.GetInput().GetKeyboard().IsShiftDown;
 
             if (_inShip)
             {
-                if (shipActions.ExitShip.IsPressed())
+                if (shipActions.ExitShip)
                 {
                     _inShip = false;
                 }
@@ -172,36 +172,36 @@ namespace test1
             else
             {
                 var actions = Ultraviolet.GetInput().GetNotInShipActions();
-                if (actions.EnterShip.IsPressed())
+                if (actions.EnterShip)
                 {
                     _inShip = true;
                 }
-                else if (actions.DeletePlanet.IsPressed())
+                else if (actions.DeletePlanet)
                 {
                     _movers.Remove(SelectedMover!);
                     SelectedMover = null!;
                 }
 
                 var offsetSpeed = 5;
-                if(actions.Up.IsDown())
+                if(actions.Up)
                     _offset -= Vector2.UnitY * offsetSpeed;
-                if(actions.Down.IsDown())
+                if(actions.Down)
                     _offset += Vector2.UnitY * offsetSpeed;
-                if(actions.Left.IsDown())
+                if(actions.Left)
                     _offset -= Vector2.UnitX * offsetSpeed;
-                if(actions.Right.IsDown())
+                if(actions.Right)
                     _offset += Vector2.UnitX * offsetSpeed;
             }
             var vector = Vector2.Zero;
             var angleAcceleration = 0f;
 
-            if (shipActions.Forward.IsDown())
+            if (shipActions.Forward)
                 vector += Vector2.UnitY * (isShiftDown ? 1500f : 400f);
-            if(shipActions.Backward.IsDown())
+            if(shipActions.Backward)
                 vector += -Vector2.UnitY * (isShiftDown ? 1500f : 400f) / 3;
-            if (shipActions.Left.IsDown())
+            if (shipActions.Left)
                 angleAcceleration -= 70f;
-            if(shipActions.Right.IsDown())
+            if(shipActions.Right)
                 angleAcceleration += 70f;
 
             var timeRatio = Globals.TimeRatio;
@@ -281,11 +281,7 @@ namespace test1
                     offset = selectedMover is CelestialBody m ? _offset + m.Position - centerWindow : _offset;
                 }
                 
-#if DEBUG
-                if (Ultraviolet.GetInput().GetGlobalActions().ShowGravity.IsUp())
-#else
-                if (Ultraviolet.GetInput().GetGlobalActions().ShowGravity.IsDown())
-#endif
+                if (Ultraviolet.GetInput().GetGlobalActions().ShowGravity)
                 {
                     if (_gravityField is (Rectangle rect, Color color)[,] field)
                     {
@@ -301,7 +297,8 @@ namespace test1
                     if (!_gravityThread.IsAlive)
                         _gravityThread.Start();
                 }
-                else if (_fps < 50)
+                
+                if (_fps < 50)
                 {
                     switch (Globals.TimeRatio)
                     {
