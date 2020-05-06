@@ -38,9 +38,7 @@ namespace test1
 #if DEBUG
                         var mouse = Ultraviolet.GetInput().GetMouse().Position;
 #endif
-                        var offset = ship.Position - centerWindow;
-                        if (!_inShip)
-                            offset = selectedMover is CelestialBody m ? _offset + m.Position - centerWindow : _offset;
+                        var offset = TotalOffset - centerWindow;
 
                         for (var x = 0; x < width; x++)
                             for (var y = 0; y < height; y++)
@@ -267,7 +265,7 @@ namespace test1
             {
                 var windowSize = new Vector2(window.ClientSize.Width, window.ClientSize.Height);
                 var centerWindow = windowSize / 2;
-                var offset = _ship.Position - centerWindow;
+                var offset = TotalOffset - centerWindow;
 
                 if (_inShip)
                 {
@@ -280,7 +278,6 @@ namespace test1
                 else
                 {
                     window.Caption += selectedMover is CelestialBody m1 ? $" -- {m1.Mass}kg - {m1.Density:0.00000}kg/m3 - {m1.Volume}m3 - {m1.Diametre}m - {m1.Velocity.Length():0.00000}m/s - {m1.Acceleration.Length():0.00000}m/s/s" : "";
-                    offset = selectedMover is CelestialBody m ? _offset + m.Position - centerWindow : _offset;
                 }
                 
                 if (Ultraviolet.GetInput().GetGlobalActions().ShowGravity)
@@ -389,6 +386,11 @@ namespace test1
             _ship.Rotation = 0;
             _ship.AngleVelocity = 0;
             SelectedMover = selected;
+        }
+
+        private Vector2 TotalOffset
+        {
+            get => _inShip ? _ship.Position : ((SelectedMover is CelestialBody body ? body.Position : Vector2.Zero) + _offset);
         }
 
         private ContentManager contentManager = null!;
