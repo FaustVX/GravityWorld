@@ -272,6 +272,7 @@ namespace test1
 
         protected override void OnDrawing(UltravioletTime time)
         {
+            var oldFps = _fps;
             _fps = 1 / time.ElapsedTime.TotalSeconds;
             Debug.WriteLine($"FPS: {_fps}");
             // var fpsRatio = TargetElapsedTime / time.ElapsedTime;
@@ -315,7 +316,7 @@ namespace test1
                         _gravityThread.Start();
                 }
                 
-                if (_fps < 50)
+                if (oldFps < 50 && _fps < 50)
                 {
                     switch (Globals.TimeRatio)
                     {
@@ -333,7 +334,7 @@ namespace test1
                             break;
                     }
                 }
-
+                
                 var drawingArea = new RectangleF(Point2F.Zero, window.ClientSize);
                 for (var i = 0; i < _movers.Count; i++)
                     if (drawingArea.Contains(_movers[i].Position - offset))
