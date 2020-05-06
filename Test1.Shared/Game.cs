@@ -134,7 +134,9 @@ namespace test1
             else if (globalActions.NextPlanet)
             {
                 var old = _movers.IndexOf(SelectedMover!);
-                SelectedMover = _movers.Count <= 0 ? null! : _movers[(old + 1) % _movers.Count];
+                var count = _movers.Count;
+                var nextIndex = old + (keyboardDevice.IsShiftDown ? -1 : 1);
+                SelectedMover = count <= 0 ? null! : _movers[((nextIndex % count) + count) % count];
             }
             else if (globalActions.DeselectPlanet)
             {
