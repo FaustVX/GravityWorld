@@ -123,6 +123,24 @@ namespace test1
             for (int i = 0; i < _movers.Count; i++)
                 _movers[i].ResetAccelerations();
             
+            var keyboardDevice = Ultraviolet.GetInput().GetKeyboard();
+            var mouseDevice = Ultraviolet.GetInput().GetMouse();
+            var window = Ultraviolet.GetPlatform().Windows.GetPrimary();
+
+            if (mouseDevice.IsButtonClicked(global::Ultraviolet.Input.MouseButton.Left))
+            {
+                var mousePos = TotalOffset + new Vector2(mouseDevice.X, mouseDevice.Y) - new Vector2(window.ClientSize.Width, window.ClientSize.Height) / 2;
+                for (var i = 0; i < _movers.Count; i++)
+                {
+                    var mover = _movers[i];
+                    if ((mover.Position - mousePos).LengthSquared() <= mover.Radius * mover.Radius)
+                    {
+                        SelectedMover = mover;
+                        break;
+                    }
+                }
+            }
+            
             var globalActions = Ultraviolet.GetInput().GetGlobalActions();
             if (globalActions.RestartApplication)
             {
@@ -160,7 +178,7 @@ namespace test1
             var runThisFrame = !_paused || globalActions.StepSimulation;
             
             var shipActions = Ultraviolet.GetInput().GetShipActions();
-            var isShiftDown = Ultraviolet.GetInput().GetKeyboard().IsShiftDown;
+            var isShiftDown = keyboardDevice.IsShiftDown;
 
             if (_inShip)
             {
